@@ -51,7 +51,7 @@ export function DocumentDetailProvider({ children, useDocumentList, removedForNe
             "comment": comment
         })
 
-        if (!response) return;
+        if (!response) return hideLoading();
 
         const docID = response.document;
         const lastStatus = useDocumentList.getLastStatus(docID);

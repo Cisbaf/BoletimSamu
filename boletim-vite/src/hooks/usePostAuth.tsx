@@ -31,6 +31,7 @@ export function usePostAuth<TResponse = any, TBody = any>({
       try {
         const response = await fetch(url, {
           method: "POST",
+          credentials: "omit", // 👈 garante que não envia cookies
           headers: {
             "Content-Type": "application/json",
             ...(token && { Authorization: `Bearer ${token}` }),
