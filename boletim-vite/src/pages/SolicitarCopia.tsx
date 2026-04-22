@@ -44,7 +44,7 @@ export default function SolicitarCopiaPage() {
 
    return (
      <Box py={10}>
-        <DocumentFormProvider submitFom={(data)=>post(MakeFormData(data))} fakeData>
+        <DocumentFormProvider submitFom={(data)=>post(MakeFormData(data))}>
             <StepForm/>
         </DocumentFormProvider>
     </Box>

@@ -24,3 +24,7 @@ docker-compose.yml
 # Outros
 *.sqlite3
 .env
+
+# adicional django
+
+django/src/staticfiles

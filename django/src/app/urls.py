@@ -16,25 +16,14 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
-from django.conf.urls.static import static
-from django.conf import settings
-from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 from django.urls import re_path
-import os
-from django.http import FileResponse
-3
-
-def frontend(request):
-    path = os.path.join(settings.BASE_DIR, 'static/frontend/index.html')
-    return FileResponse(open(path, 'rb'))
+from frontend.views import frontend
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('auth/', include('authjwt.urls')),
     path('document/', include('document_request.urls')),
 ]
-
-urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT) + staticfiles_urlpatterns()
 
 # Está assim pois como o front-end está integrado todas urls precisam vir primeiro!
 urlpatterns.append(re_path(r'^.*$', frontend))

@@ -21,16 +21,19 @@ RUN npm run build
 # =========================
 FROM python:3.12-slim
 
-WORKDIR /app
+# Instala dependências de runtime necessárias para mysqlclient funcionar
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends gcc libpq-dev pkg-config default-libmysqlclient-dev poppler-utils && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
 
 # Evita arquivos .pyc e buffer
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
-# Instala dependências do sistema (se precisar)
-RUN apt-get update && apt-get install -y \
-    build-essential \
-    && rm -rf /var/lib/apt/lists/*
+# Padta Principal
+WORKDIR /app
 
 # Copia backend
 COPY django/ ./
@@ -45,5 +48,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Porta padrão
 EXPOSE 8000
 
-# Comando (ajuste se necessário)
-CMD ["python", "src/manage.py", "runserver", "0.0.0.0:8000"]
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+WORKDIR /app/src
+
+ENTRYPOINT ["/entrypoint.sh"]

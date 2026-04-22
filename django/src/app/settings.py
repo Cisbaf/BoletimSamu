@@ -12,6 +12,8 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 from pathlib import Path
 from datetime import timedelta
+import os
+import dj_database_url
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -20,22 +22,26 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-o1fttak9+*9x!5*hv39(=3sf4**^zjysm#0c95ckp_s@z9x)u7'
+SECRET_KEY = os.getenv("DJANGO_SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
-ALLOWED_HOSTS = ["*"]
-
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173",
-    "http://192.168.1.191:5173"
+ALLOWED_HOSTS = [
+    "localhost",
+    "192.168.1.10",
+    "atendimentocrur.cisbaf.org.br",
+    "www.atendimentocrur.cisbaf.org.br"
 ]
+
+CORS_ALLOWED_ORIGINS = []
 
 CSRF_TRUSTED_ORIGINS = [
-    "http://localhost:5173",
-    "http://192.168.1.191:5173"
+    "http://192.168.1.10",
+    "https://atendimentocrur.cisbaf.org.br",
 ]
+
+USE_X_FORWARDED_HOST = True
 
 # Application definition
 REST_FRAMEWORK = {
@@ -49,14 +55,9 @@ REST_FRAMEWORK = {
 }
 
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=30),
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
+    'ACCESS_TOKEN_LIFETIME': timedelta(days=30),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=60),
 }
-
-
-CRONJOBS = [
-    ('* * * * *', 'document_request.task.task_simples')
-]
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -69,7 +70,6 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework_simplejwt',
     'authjwt',
-    "django_crontab",
     'frontend',
     'protocol_counter',
     'document_request',
@@ -113,12 +113,11 @@ WSGI_APPLICATION = 'app.wsgi.application'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
+    "default": dj_database_url.config(
+        default="sqlite:///db.sqlite3",
+        conn_max_age=600,
+    )
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
@@ -160,6 +159,7 @@ STATIC_URL = 'static/'
 STATICFILES_DIRS = [
     BASE_DIR / "static",
 ]
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 MEDIA_ROOT = BASE_DIR / 'media'
 MEDIA_URL = 'media/'
 # Default primary key field type

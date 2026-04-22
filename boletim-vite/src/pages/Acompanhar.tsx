@@ -65,7 +65,6 @@ export default function AcompanharSolicitacao() {
   React.useEffect(() => {
     if (!err) return;
     setTimeout(() => {
-      console.log(err)
         error({ title: "Problema ao se conectar", description: err.message });
       }, 0);
   }, [err]);

@@ -8,11 +8,11 @@ import { isValidCPF } from "./valid";
 export const CITIES = [
   "BELFORD ROXO",
   "DUQUE DE CAXIAS",
-  "ITAGUAI",
+  "ITAGUAÍ",
   "JAPERI",
   "MAGE",
   "MESQUITA",
-  "NILOPOLIS",
+  "NILÓPOLIS",
   "NOVA IGUACU",
   "PARACAMBI",
   "QUEIMADOS",

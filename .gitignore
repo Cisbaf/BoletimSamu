@@ -631,3 +631,8 @@ MigrationBackup/
 .ionide/
 
 # End of https://www.toptal.com/developers/gitignore/api/vs,python,django,react
+
+
+# adicional django
+
+*staticfiles

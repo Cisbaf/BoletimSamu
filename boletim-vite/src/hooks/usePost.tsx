@@ -18,7 +18,8 @@ export function usePost<T = any>({ url, onSuccess, onError, multiPart }: UsePost
     setError(null);
 
     try {
-      const response = await fetch(url, multiPart? GetMultiPart(body) : GetPostJson(body));
+      const response = await fetch(url,
+        multiPart? GetMultiPart(body) : GetPostJson(body));
 
       const result = await response.json();
 
@@ -44,6 +45,7 @@ export function usePost<T = any>({ url, onSuccess, onError, multiPart }: UsePost
 function GetPostJson(body: any) {
     return {
         method: "POST",
+        credentials: "omit", // 👈 garante que não envia cookies
         headers: {
           "Content-Type": "application/json",
         },

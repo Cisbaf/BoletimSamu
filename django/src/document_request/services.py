@@ -18,8 +18,6 @@ def send_message_wpp_to_admin(doc: DocumentRequest):
             data=json.dumps(data),
             timeout=3
         )
-        print(response.ok)
-        print(response.text)
     except Exception as e:
         print(e)
         pass

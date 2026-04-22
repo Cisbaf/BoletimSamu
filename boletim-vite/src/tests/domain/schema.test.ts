@@ -39,8 +39,6 @@ describe("DocumentSchema", () => {
 
     const result = DocumentSchema.safeParse(validData);
 
-    console.log(result.error)
-
     expect(result.success).toBe(true);
   });
 
