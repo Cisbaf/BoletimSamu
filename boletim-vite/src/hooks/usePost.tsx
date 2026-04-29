@@ -43,19 +43,20 @@ export function usePost<T = any>({ url, onSuccess, onError, multiPart }: UsePost
 }
 
 function GetPostJson(body: any) {
-    return {
-        method: "POST",
-        credentials: "omit", // 👈 garante que não envia cookies
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(body),
-    }
+  return {
+    method: "POST",
+    credentials: "omit" as RequestCredentials,
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(body),
+  };
 }
 
 function GetMultiPart(body: any) {
-    return {
-        method: "POST",
-        body: body
-    }
+  return {
+    method: "POST",
+    credentials: "omit" as RequestCredentials,
+    body: body,
+  };
 }
