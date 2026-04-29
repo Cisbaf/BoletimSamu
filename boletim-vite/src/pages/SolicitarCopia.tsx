@@ -68,7 +68,7 @@ function StepForm() {
             title: "Dados da Ocorrência",
             description: "Essa etapa identifica as informações do atendimento do SAMU.",
             component: <IncidentForm/>,
-            validate: () => form.trigger("incident")
+            validate: () => form.trigger(["purpose", "incident"])
           },
           {
             title: "Anexos",

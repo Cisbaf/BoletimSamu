@@ -148,7 +148,7 @@ export const DocumentsSchema = z
   .optional();
   
 export const DocumentSchema = z.object({
-  purpose: z.enum(PURPOSES),
+  purpose: z.enum(PURPOSES, "Selecione uma opção!"),
   applicant: ApplicantSchema,
   incident: IncidentSchema,
   documents: DocumentsSchema.optional(),
