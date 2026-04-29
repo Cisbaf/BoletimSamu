@@ -26,7 +26,7 @@ export const PURPOSES = [
   "INSS",
   "SEGURO",
   "INVENTARIO",
-  "ACAO_JUDICIAL",
+  "ACAO JUDICIAL",
   "OUTROS",
 ] as const;
 

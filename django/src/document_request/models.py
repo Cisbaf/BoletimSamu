@@ -35,7 +35,7 @@ class DocumentRequest(models.Model):
         INSS = "INSS", _("Benefício INSS")
         SEGURO = "SEGURO", _("Seguro")
         INVENTARIO = "INVENTARIO", _("Inventário")
-        ACAO_JUDICIAL = "ACAO_JUDICIAL", _("Ação Judicial")
+        ACAO_JUDICIAL = "ACAO JUDICIAL", _("Ação Judicial")
         OUTROS = "OUTROS", _("Outros")
 
     purpose = models.CharField(
