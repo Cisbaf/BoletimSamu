@@ -49,7 +49,7 @@ class DocumentRequestCreateAPIView(APIView):
     parser_classes = (MultiPartParser, FormParser)
 
     def post(self, request):
-        data = request.data.copy()
+        data = request.data
         processed_data = convert_document_multipart_to_json(data, request.FILES)
         serializer = DocumentRequestSerializer(data=processed_data)
         serializer.is_valid(raise_exception=True)
