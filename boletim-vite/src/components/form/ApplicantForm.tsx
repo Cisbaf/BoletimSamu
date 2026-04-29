@@ -127,7 +127,7 @@ export default function ApplicantForm() {
             {/* RG */}
             <Field.Root invalid={!!errors.applicant?.rg}>
                 <Field.Label  fontWeight={"bold"}>RG</Field.Label>
-                <Input variant="outline" type="number" {...register("applicant.rg")} />
+                <Input variant="outline" type="numeric" {...register("applicant.rg")} />
                 <Field.ErrorText>
                     {errors.applicant?.rg?.message}
                 </Field.ErrorText>
