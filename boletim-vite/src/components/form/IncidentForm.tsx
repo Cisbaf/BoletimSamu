@@ -27,6 +27,14 @@ export default function IncidentForm() {
   } = form;
 
   const location = watch("incident.attendance_location");
+  const applicantType = watch("applicant.applicant_type");
+
+  const isPurposeDisabled = (purpose: string) => {
+    if (applicantType === "PATIENT" && purpose === "OBITO") {
+      return true;
+    }
+    return false;
+  };
 
   return (
     <Stack
@@ -228,7 +236,10 @@ export default function IncidentForm() {
                     flexWrap="wrap"
                   >
                     {PURPOSES.map((purpose) => (
-                      <RadioGroup.Item key={purpose} value={purpose}>
+                      <RadioGroup.Item
+                          key={purpose}
+                          value={purpose}
+                          disabled={isPurposeDisabled(purpose)}>
                         <RadioGroup.ItemHiddenInput />
                         <RadioGroup.ItemIndicator />
                         <RadioGroup.ItemText>
