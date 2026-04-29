@@ -114,7 +114,8 @@ class DocumentRequestSerializer(serializers.ModelSerializer):
             },
             context={
                 "applicant_type": applicant_data.get("applicant_type"),
-                "relationship_degree": applicant_data.get("relationship_degree")
+                "relationship_degree": applicant_data.get("relationship_degree"),
+                "purpose": purpose
             }
         )
         

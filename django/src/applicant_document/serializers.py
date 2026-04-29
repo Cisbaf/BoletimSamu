@@ -33,15 +33,19 @@ class ApplicantDocumentRequestSerializer(serializers.Serializer):
 
         # 👇 agora vem do context
         applicant_type = self.context.get("applicant_type")
+        purpose = self.context.get("purpose")
         relationship_degree = self.context.get("relationship_degree")
 
         if not applicant_type:
             raise ValidationError("Tipo de solicitante não informado.")
         
+        if not purpose:
+            raise ValidationError("Purpose não informado.")
+        
         if applicant_type == Applicant.ApplicantType.REPRESENTATIVE and not relationship_degree:
             raise ValidationError("Parentesco é obrigatório para representante.")
 
-        required_docs = set(get_required_docs(applicant_type, relationship_degree))
+        required_docs = set(get_required_docs(applicant_type, purpose, relationship_degree))
         sent_docs = set(types)
 
         # 1️⃣ quantidade

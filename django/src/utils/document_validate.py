@@ -22,11 +22,14 @@ REQUIRED_DOCUMENTS_BY_TYPE = {
         ],
     }
 }
-def get_required_docs(applicant_type, relationship_degree=None):
+def get_required_docs(applicant_type, purpose, relationship_degree=None):
     if applicant_type == Applicant.ApplicantType.PATIENT:
         return REQUIRED_DOCUMENTS_BY_TYPE[Applicant.ApplicantType.PATIENT]
 
     if applicant_type == Applicant.ApplicantType.REPRESENTATIVE:
-        return REQUIRED_DOCUMENTS_BY_TYPE[Applicant.ApplicantType.REPRESENTATIVE][relationship_degree]
+        docs = REQUIRED_DOCUMENTS_BY_TYPE[Applicant.ApplicantType.REPRESENTATIVE][relationship_degree]
+        if purpose == "OBITO":
+            docs.append(DocumentType.DEATH_CERTIFICATE)
+        return docs
 
     return []

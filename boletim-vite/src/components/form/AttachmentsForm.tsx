@@ -19,16 +19,36 @@ export default function AttachmentsForm() {
 
   const applicantType = watch("applicant.applicant_type");
   const relationship = watch("applicant.relationship_degree");
+  const purpose = watch("purpose");
+  const currentDocs = watch("documents");
 
-  const requiredDocs = getRequiredDocuments(applicantType, relationship);
+  const requiredDocs = getRequiredDocuments(applicantType, relationship, purpose);
 
   const previousApplicantType = React.useRef(applicantType);
   const previousRelationship = React.useRef(relationship);
+  const previousPurpose = React.useRef(purpose);
 
   React.useEffect(() => {
-  previousApplicantType.current = applicantType;
-  previousRelationship.current = relationship;
-}, [applicantType, relationship]);
+    if (previousApplicantType.current != applicantType) {
+      previousApplicantType.current = applicantType;
+    }
+
+    if (previousRelationship.current != relationship) {
+      setValue("documents", undefined);
+      previousRelationship.current = relationship;
+    }
+
+    if (previousPurpose.current != purpose) {
+      if (previousPurpose.current == "OBITO") {
+        if (!currentDocs) return;
+        const { DEATH_CERTIFICATE, ...rest } = currentDocs;
+        //@ts-ignore
+        setValue("documents", rest);
+      }
+      previousPurpose.current = purpose
+    }
+
+}, [applicantType, relationship, purpose]);
 
   if (!requiredDocs.length) {
     return (
@@ -50,6 +70,7 @@ export default function AttachmentsForm() {
           </Field.Label>
 
           <Input
+            key={`${docType}-${relationship}-${purpose}`}
             type="file"
             accept="image/*,.pdf"
             onChange={(e) => {

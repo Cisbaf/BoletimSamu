@@ -52,6 +52,7 @@ export const DOCUMENT_TYPES = [
   "APPLICANT_ID",
   "MARRIAGE_CERTIFICATE",
   "POWER_OF_ATTORNEY",
+  "DEATH_CERTIFICATE",
 ] as const;
 
 export const ApplicantSchema = z
@@ -133,6 +134,9 @@ export const REQUIRED_DOCUMENTS = {
     SPOUSE: ["PATIENT_ID", "APPLICANT_ID", "MARRIAGE_CERTIFICATE"],
     ATTORNEY: ["PATIENT_ID", "APPLICANT_ID", "POWER_OF_ATTORNEY"],
   },
+  PURPOSE: {
+    OBITO: ["DEATH_CERTIFICATE"]
+  }
 } as const;
 
 
@@ -152,15 +156,23 @@ export const DocumentSchema = z.object({
     const { applicant_type, relationship_degree } = data.applicant;
     const uploadedDocs = Object.keys(data.documents ?? {});
 
-    let requiredDocs: readonly string[] = [];
+    let requiredDocs: RequiredDocument[] = [];
 
     if (applicant_type === "PATIENT") {
-      requiredDocs = REQUIRED_DOCUMENTS.PATIENT.default;
+      requiredDocs = [...REQUIRED_DOCUMENTS.PATIENT.default];
     }
 
     if (applicant_type === "REPRESENTATIVE" && relationship_degree) {
-      requiredDocs =
-        REQUIRED_DOCUMENTS.REPRESENTATIVE[relationship_degree];
+      requiredDocs = [
+        ...REQUIRED_DOCUMENTS.REPRESENTATIVE[relationship_degree],
+      ];
+    }
+
+    // 🔴 REGRA NOVA: Óbito sempre exige certidão de óbito
+    if (data.purpose === "OBITO") {
+      if (!requiredDocs.includes("DEATH_CERTIFICATE")) {
+        requiredDocs.push("DEATH_CERTIFICATE");
+      }
     }
 
     const missingDocs = requiredDocs.filter(
@@ -211,13 +223,16 @@ string> = {
   APPLICANT_ID: "Documento Solicitante",
   MARRIAGE_CERTIFICATE: "Certidão Casamento / União estável",
   POWER_OF_ATTORNEY: "Procuração específica",
+  DEATH_CERTIFICATE: "Certidão de Óbito"
 };
 
 export type RequiredDocument =
   | "PATIENT_ID"
   | "APPLICANT_ID"
   | "MARRIAGE_CERTIFICATE"
-  | "POWER_OF_ATTORNEY";
+  | "POWER_OF_ATTORNEY"
+  | "DEATH_CERTIFICATE";
+
 
 export type DocumentFormData = z.infer<typeof DocumentSchema>;
 export type Applicant = z.infer<typeof ApplicantSchema>;

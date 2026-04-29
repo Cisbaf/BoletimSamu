@@ -3,17 +3,27 @@ import type { RequiredDocument } from "./documentSchemaForm";
 
 export function getRequiredDocuments(
   applicantType?: string,
-  relationship?: string
+  relationship?: string,
+  purpose?: string,
 ): readonly RequiredDocument[] {
+  let docs: RequiredDocument[] = [];
+
   if (applicantType === "PATIENT") {
-    return ["PATIENT_ID"];
+    docs = [...REQUIRED_DOCUMENTS.PATIENT.default];
   }
 
   if (applicantType === "REPRESENTATIVE" && relationship) {
-    return REQUIRED_DOCUMENTS.REPRESENTATIVE[
-      relationship as keyof typeof REQUIRED_DOCUMENTS.REPRESENTATIVE
+    docs = [
+      ...REQUIRED_DOCUMENTS.REPRESENTATIVE[
+        relationship as keyof typeof REQUIRED_DOCUMENTS.REPRESENTATIVE
+      ],
     ];
   }
 
-  return [];
+  // adiciona certidão de óbito se necessário
+  if (purpose === "OBITO" && !docs.includes("DEATH_CERTIFICATE")) {
+    docs.push("DEATH_CERTIFICATE");
+  }
+
+  return docs;
 }
