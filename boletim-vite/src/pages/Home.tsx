@@ -1,46 +1,57 @@
-import { Box, Text, Center, SimpleGrid, Container } from "@chakra-ui/react";
+import { Box, Text, SimpleGrid } from "@chakra-ui/react";
 import CardMenuItem from "../components/CardMenuItem";
 import { MdHealthAndSafety, MdReportProblem } from "react-icons/md";
 import { RiChatSearchFill } from "react-icons/ri";
 
 export default function HomePage() {
   return (
-    <Box py={10}>
-      <Container maxW="6xl">
-        <Center mb={12}>
-          <Text
-            fontSize={["xl", "2xl", "3xl", "4xl"]}
-            fontWeight="bold"
-            textAlign="center"
-          >
-            CÓPIA DE BOLETIM DE ATENDIMENTO SAMU
-          </Text>
-        </Center>
+    <Box maxW="900px" mx="auto">
 
-        <SimpleGrid columns={[1, 1, 2, 3]} gap={[4, 6, 8]}>
-          <CardMenuItem
-            title="SOLICITAR CÓPIA"
-            desc="O boletim de atendimento é o documento que contém informações detalhadas sobre a assistência emergencial prestada ao paciente pelo SAMU."
-            routePage="/solicitar"
-            icon={MdHealthAndSafety}
-          />
+      {/* Header */}
+      <Box mb={10}>
+        <Text
+          fontSize={["20px", "24px", "28px"]}
+          fontWeight="800"
+          color="#111827"
+          letterSpacing="-0.6px"
+          mb={2}
+        >
+          Solicitação de Cópia de Boletim
+        </Text>
+        <Text fontSize="14px" color="#6B7280">
+          SAMU 192 · Serviço de Atendimento Móvel de Urgência — CISBAF
+        </Text>
+      </Box>
 
-          <CardMenuItem
-            title="ACOMPANHAR SOLICITAÇÃO"
-            desc="Já solicitou a cópia do boletim? Acompanhe aqui o andamento do seu pedido."
-            routePage="/acompanhar"
-            icon={RiChatSearchFill}
-          />
+      <SimpleGrid columns={[1, 1, 3]} gap={5}>
+        <CardMenuItem
+          title="Solicitar Cópia"
+          desc="Solicite a cópia do boletim de atendimento de emergência prestado pelo SAMU."
+          routePage="/solicitar"
+          icon={MdHealthAndSafety}
+          iconBg="#EFF6FF"
+          iconColor="#2563EB"
+        />
 
-          <CardMenuItem
-            title="RELATAR PROBLEMA NO SISTEMA"
-            desc="Se algo não funcionou como deveria, conte pra gente. Sua ajuda é importante para melhorarmos o sistema."
-            routePage="https://chamadosti.cisbaf.org.br/"
-            isExternal
-            icon={MdReportProblem}
-          />
-        </SimpleGrid>
-      </Container>
+        <CardMenuItem
+          title="Acompanhar Solicitação"
+          desc="Já enviou sua solicitação? Acompanhe o status e prazo do seu pedido aqui."
+          routePage="/acompanhar"
+          icon={RiChatSearchFill}
+          iconBg="#F0FDF4"
+          iconColor="#16A34A"
+        />
+
+        <CardMenuItem
+          title="Relatar Problema"
+          desc="Encontrou algum erro ou dificuldade? Fale com a equipe de TI do CISBAF."
+          routePage="https://chamadosti.cisbaf.org.br/"
+          isExternal
+          icon={MdReportProblem}
+          iconBg="#FEF2F2"
+          iconColor="#DC2626"
+        />
+      </SimpleGrid>
     </Box>
   );
 }

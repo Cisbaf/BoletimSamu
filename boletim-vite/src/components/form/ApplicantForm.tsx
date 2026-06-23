@@ -1,181 +1,175 @@
 import {
+  Box,
   Field,
-  HStack,
-  NativeSelect,
-  Button,
   Stack,
   Input,
-  SimpleGrid,
   Grid,
+  Text,
 } from "@chakra-ui/react";
 import { useDocumentFormContext } from "../../context/DocumentFormContext";
-import { APPLICANT_TYPES, RELATIONSHIP_DEGREES, APPLICANT_TYPE_LABELS, RELATIONSHIP_DEGREE_LABELS } from "../../domain/documentSchemaForm";
 import { useWatch } from "react-hook-form";
-import React from "react";
 
+// ─── Opções de tipo de solicitante ──────────────────────────────────────────
+
+const APPLICANT_OPTIONS = [
+  {
+    applicantType: "PATIENT" as const,
+    relationship: undefined,
+    emoji: "🧑‍⚕️",
+    label: "Próprio Paciente",
+    sub: "Eu fui o paciente atendido",
+  },
+  {
+    applicantType: "REPRESENTATIVE" as const,
+    relationship: "FAMILY" as const,
+    emoji: "👨‍👩‍👧",
+    label: "Familiar",
+    sub: "Pai, mãe, filho, irmão...",
+  },
+  {
+    applicantType: "REPRESENTATIVE" as const,
+    relationship: "SPOUSE" as const,
+    emoji: "💍",
+    label: "Cônjuge",
+    sub: "Esposo(a) ou companheiro(a)",
+  },
+  {
+    applicantType: "REPRESENTATIVE" as const,
+    relationship: "ATTORNEY" as const,
+    emoji: "📋",
+    label: "Procurador",
+    sub: "Com procuração específica",
+  },
+] as const;
+
+// ─── Componente ──────────────────────────────────────────────────────────────
 
 export default function ApplicantForm() {
-    const { form } = useDocumentFormContext();
-    const {formState: { errors }, register, setValue } = form;
-    
-    const applicantType = useWatch({
-        control: form.control,
-        name: "applicant.applicant_type",
-    });
+  const { form } = useDocumentFormContext();
+  const { formState: { errors }, register, setValue } = form;
 
-    React.useEffect(() => {
-    if (applicantType === "PATIENT") {
-        form.setValue("applicant.relationship_degree", undefined);
+  const applicantType = useWatch({ control: form.control, name: "applicant.applicant_type" });
+  const relationship  = useWatch({ control: form.control, name: "applicant.relationship_degree" });
+
+  function selectOption(opt: typeof APPLICANT_OPTIONS[number]) {
+    setValue("applicant.applicant_type", opt.applicantType, { shouldValidate: true, shouldDirty: true });
+    if (opt.relationship) {
+      setValue("applicant.relationship_degree", opt.relationship, { shouldValidate: true, shouldDirty: true });
+    } else {
+      setValue("applicant.relationship_degree", undefined);
     }
-    }, [applicantType]);
+  }
 
-    return (
-        <Stack >
+  function isActive(opt: typeof APPLICANT_OPTIONS[number]) {
+    if (opt.applicantType === "PATIENT") return applicantType === "PATIENT";
+    return applicantType === "REPRESENTATIVE" && relationship === opt.relationship;
+  }
 
-        {/* SESSÃO 1*/}
-        <SimpleGrid
-            columns={{ base: 1, lg: 2 }}
-            gap={6}
-            w="100%">
-         {/* APPLICANT TYPE */}
-            <Field.Root invalid={!!errors.applicant?.applicant_type}>
-                <Field.Label  fontWeight={"bold"}>Tipo de solicitante</Field.Label>
-                <HStack gap={2}>
-                    {APPLICANT_TYPES.map((type) => {
-                    const isActive = applicantType === type;
-                    return (
-                    <Button
-                        key={type}
-                        flex={1}
-                        aria-pressed={isActive}
-                        role="radio"
-                        variant={isActive ? "solid" : "outline"}
-                        colorScheme={isActive ? "blue" : "gray"}
-                        onClick={() =>
-                        setValue("applicant.applicant_type", type, {
-                            shouldValidate: true,
-                            shouldDirty: true,
-                        })}>
-                        {APPLICANT_TYPE_LABELS[type]}
-                    </Button>
-                    );
-                })}
-                </HStack>
-                <Field.ErrorText> {errors.applicant?.applicant_type?.message}</Field.ErrorText>
-            </Field.Root>
+  return (
+    <Stack gap={6}>
 
+      {/* ── Tipo de Solicitante ── */}
+      <Field.Root invalid={!!errors.applicant?.applicant_type}>
+        <Field.Label fontWeight="600" fontSize="13px" color="#374151" mb={3}>
+          Você é o paciente ou solicita em nome de alguém? *
+        </Field.Label>
 
-        {/* RELATIONSHIP (CONDICIONAL) */}
-        {applicantType === "REPRESENTATIVE" && (
-          <Field.Root
-            invalid={!!errors.applicant?.relationship_degree}
-          >
-            <Field.Root invalid={!!errors.applicant?.relationship_degree}>
-            <Field.Label  fontWeight={"bold"}>Grau de parentesco</Field.Label>
-            <NativeSelect.Root>
-                <NativeSelect.Field
-                placeholder="Selecione"
-                {...register("applicant.relationship_degree")}
+        <Grid templateColumns={{ base: "1fr 1fr", md: "repeat(4, 1fr)" }} gap={3}>
+          {APPLICANT_OPTIONS.map((opt) => {
+            const active = isActive(opt);
+            return (
+              <Box
+                key={opt.label}
+                role="button"
+                tabIndex={0}
+                onClick={() => selectOption(opt)}
+                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") selectOption(opt) }}
+                border="2px solid"
+                borderColor={active ? "#2563EB" : "#E5E7EB"}
+                borderRadius="10px"
+                p={4}
+                bg={active ? "#EFF6FF" : "white"}
+                cursor="pointer"
+                textAlign="left"
+                transition="all 0.15s"
+                _hover={{
+                  borderColor: active ? "#2563EB" : "#C7D2FE",
+                  bg: active ? "#EFF6FF" : "#F8FAFC",
+                }}
+              >
+                <Text fontSize="22px" mb={2} lineHeight={1}>{opt.emoji}</Text>
+                <Text
+                  fontSize="13px"
+                  fontWeight="600"
+                  color={active ? "#1D4ED8" : "#374151"}
+                  lineHeight={1.3}
                 >
-                {RELATIONSHIP_DEGREES.map(r => (
-                    <option key={r} value={r}>
-                    {RELATIONSHIP_DEGREE_LABELS[r]}
-                    </option>
-                ))}
-                </NativeSelect.Field>
-            </NativeSelect.Root>
-            <Field.ErrorText> {errors.applicant?.relationship_degree?.message}</Field.ErrorText>
-            </Field.Root>
-          </Field.Root>
-        )}
-        </SimpleGrid>
-
-        {/* SESSÃO 2*/}
-        <Grid
-            w={"100%"}
-              templateColumns={{
-                base: "1fr",          // mobile
-                md: "1fr 1fr",        // tablet
-                lg: "3fr 3fr 2fr",    // desktop
-            }}
-            gap={6}>
-
-            {/* FULL NAME */}
-            <Field.Root invalid={!!errors.applicant?.full_name}>
-                <Field.Label  fontWeight={"bold"}>Nome completo</Field.Label>
-                <Input
-                    variant="outline"
-                    autoComplete="name"
-                    {...register("applicant.full_name")} />
-                <Field.ErrorText>
-                    {errors.applicant?.full_name?.message}
-                </Field.ErrorText>
-            </Field.Root>
-
-            {/* CPF */}
-            <Field.Root invalid={!!errors.applicant?.cpf}>
-                <Field.Label  fontWeight={"bold"}>CPF</Field.Label>
-                <Input
-                inputMode="numeric"
-                pattern="[0-9]*"
-                placeholder="000.000.000-00" {...register("applicant.cpf")} />
-                <Field.ErrorText>
-                    {errors.applicant?.cpf?.message}
-                </Field.ErrorText>
-            </Field.Root>
-
-            {/* RG */}
-            <Field.Root invalid={!!errors.applicant?.rg}>
-                <Field.Label  fontWeight={"bold"}>RG</Field.Label>
-                <Input variant="outline" type="numeric" {...register("applicant.rg")} />
-                <Field.ErrorText>
-                    {errors.applicant?.rg?.message}
-                </Field.ErrorText>
-            </Field.Root>
-
+                  {opt.label}
+                </Text>
+                <Text fontSize="11px" color={active ? "#60A5FA" : "#9CA3AF"} mt="2px">
+                  {opt.sub}
+                </Text>
+              </Box>
+            );
+          })}
         </Grid>
 
-        {/* SESSÃO 3*/}
-        <Grid
-            w={"100%"}
-              templateColumns={{
-                base: "1fr",          // mobile
-                md: "1fr 1fr",        // tablet
-                lg: "2fr 3fr 2fr",    // desktop
-            }}
-            gap={6}>
-            {/* Email */}
-            <Field.Root invalid={!!errors.applicant?.email}>
-                <Field.Label  fontWeight={"bold"}>Email</Field.Label>
-                <Input
-                    autoComplete="email"
-                    variant="outline"
-                    {...register("applicant.email")} />
-                <Field.ErrorText>
-                    {errors.applicant?.email?.message}
-                </Field.ErrorText>
-            </Field.Root>
+        <Field.ErrorText>{errors.applicant?.applicant_type?.message}</Field.ErrorText>
+        {errors.applicant?.relationship_degree && (
+          <Text fontSize="12px" color="#E03131" mt={1}>
+            {errors.applicant.relationship_degree.message}
+          </Text>
+        )}
+      </Field.Root>
 
-            {/* Endereço */}
-            <Field.Root invalid={!!errors.applicant?.address}>
-                <Field.Label  fontWeight={"bold"}>Endereço</Field.Label>
-                <Input variant="outline" {...register("applicant.address")} />
-                <Field.ErrorText>
-                    {errors.applicant?.address?.message}
-                </Field.ErrorText>
-            </Field.Root>
+      {/* ── Nome · CPF · RG ── */}
+      <Grid
+        templateColumns={{ base: "1fr", md: "1fr 1fr", lg: "3fr 3fr 2fr" }}
+        gap={4}
+      >
+        <Field.Root invalid={!!errors.applicant?.full_name}>
+          <Field.Label fontWeight="600" fontSize="13px" color="#374151">Nome completo *</Field.Label>
+          <Input autoComplete="name" placeholder="Ex: João da Silva Santos" {...register("applicant.full_name")} />
+          <Field.ErrorText>{errors.applicant?.full_name?.message}</Field.ErrorText>
+        </Field.Root>
 
-            {/* Telefone */}
-            <Field.Root invalid={!!errors.applicant?.phone}>
-                <Field.Label  fontWeight={"bold"}>Telefone</Field.Label>
-                <Input
-                autoComplete="tel"
-                variant="outline"
-                type="number"
-                {...register("applicant.phone")} />
-                <Field.ErrorText> {errors.applicant?.phone?.message}</Field.ErrorText>
-            </Field.Root>
-            </Grid>
+        <Field.Root invalid={!!errors.applicant?.cpf}>
+          <Field.Label fontWeight="600" fontSize="13px" color="#374151">CPF *</Field.Label>
+          <Input inputMode="numeric" placeholder="000.000.000-00" {...register("applicant.cpf")} />
+          <Field.ErrorText>{errors.applicant?.cpf?.message}</Field.ErrorText>
+        </Field.Root>
+
+        <Field.Root invalid={!!errors.applicant?.rg}>
+          <Field.Label fontWeight="600" fontSize="13px" color="#374151">RG *</Field.Label>
+          <Input placeholder="0.000.000" {...register("applicant.rg")} />
+          <Field.ErrorText>{errors.applicant?.rg?.message}</Field.ErrorText>
+        </Field.Root>
+      </Grid>
+
+      {/* ── Email · Endereço · Telefone ── */}
+      <Grid
+        templateColumns={{ base: "1fr", md: "1fr 1fr", lg: "2fr 3fr 2fr" }}
+        gap={4}
+      >
+        <Field.Root invalid={!!errors.applicant?.email}>
+          <Field.Label fontWeight="600" fontSize="13px" color="#374151">Email *</Field.Label>
+          <Input autoComplete="email" placeholder="seu@email.com" {...register("applicant.email")} />
+          <Field.ErrorText>{errors.applicant?.email?.message}</Field.ErrorText>
+        </Field.Root>
+
+        <Field.Root invalid={!!errors.applicant?.address}>
+          <Field.Label fontWeight="600" fontSize="13px" color="#374151">Endereço *</Field.Label>
+          <Input placeholder="Rua, número, bairro, cidade — UF" {...register("applicant.address")} />
+          <Field.ErrorText>{errors.applicant?.address?.message}</Field.ErrorText>
+        </Field.Root>
+
+        <Field.Root invalid={!!errors.applicant?.phone}>
+          <Field.Label fontWeight="600" fontSize="13px" color="#374151">Telefone *</Field.Label>
+          <Input autoComplete="tel" placeholder="(00) 00000-0000" {...register("applicant.phone")} />
+          <Field.ErrorText>{errors.applicant?.phone?.message}</Field.ErrorText>
+        </Field.Root>
+      </Grid>
+
     </Stack>
-    )
+  );
 }

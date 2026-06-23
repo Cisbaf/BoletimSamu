@@ -58,22 +58,27 @@ function StepForm() {
   return (
     <StepperRequestProvider>
       <StepperForm
+        brandName="SAMU 192"
+        brandSubtitle="Solicitação de Cópia de Boletim"
         steps={[
           {
             title: "Dados do Solicitante",
-            description: "Essa etapa identifica quem preenche o formulário.",
+            description: "Identifique quem está realizando esta solicitação.",
+            stepLabel: "Solicitante",
             component: <ApplicantForm/>,
             validate: () => form.trigger("applicant")
           },
           {
             title: "Dados da Ocorrência",
-            description: "Essa etapa identifica as informações do atendimento do SAMU.",
+            description: "Informe os dados sobre o atendimento do SAMU.",
+            stepLabel: "Ocorrência",
             component: <IncidentForm/>,
             validate: () => form.trigger(["purpose", "incident"])
           },
           {
-            title: "Anexos",
-            description: "Essa requerer envio da documentação.",
+            title: "Finalidade e Documentos",
+            description: "Informe a finalidade e envie os documentos necessários.",
+            stepLabel: "Documentos",
             component: <AttachmentsForm/>,
             validate: () => form.trigger("documents")
           }

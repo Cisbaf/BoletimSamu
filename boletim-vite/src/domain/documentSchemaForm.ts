@@ -224,11 +224,20 @@ export const RELATIONSHIP_DEGREE_LABELS: Record<
   ATTORNEY: "Procurador",
 };
 
-export const LOCATION_LABELS: Record<(typeof ATTENDANCE_LOCATIONS)[number],
-string> = {
+export const LOCATION_LABELS: Record<(typeof ATTENDANCE_LOCATIONS)[number], string> = {
   RES: "Residência",
   PUB: "Local Público",
   OTH: "Outro",
+};
+
+export const PURPOSE_LABELS: Record<(typeof PURPOSES)[number], string> = {
+  OBITO: "Óbito",
+  DPVAT: "DPVAT",
+  INSS: "INSS",
+  SEGURO: "Seguro",
+  INVENTARIO: "Inventário",
+  "ACAO JUDICIAL": "Ação Judicial",
+  OUTROS: "Outros",
 };
 
 export const DOCUMENT_LABELS: Record<(typeof DOCUMENT_TYPES)[number],
