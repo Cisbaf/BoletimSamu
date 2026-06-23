@@ -89,6 +89,7 @@ def convert_document_multipart_to_json(data, files):
     # Resultado final
     processed_data = {
         'purpose': data.get('purpose'),
+        'other_purpose': data.get('other_purpose', ''),
         'applicant': data.get('applicant', {}),
         'incident': data.get('incident', {}),
         'document_types': data.get('document_types', []),

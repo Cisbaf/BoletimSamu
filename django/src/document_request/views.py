@@ -1,4 +1,5 @@
 from django.db.models import Prefetch
+from django.core.exceptions import ValidationError
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.views import APIView, Response
 from rest_framework.viewsets import ReadOnlyModelViewSet
@@ -7,7 +8,7 @@ from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from .models import DocumentRequest, DocumentStatus
 from applicant_document.models import ApplicantDocument
-from .serializers import DocumentRequestSerializer, DocumentRequestDetailSerializer, DocumentSimpleDetailSerializer, DocumentStatusSerializer
+from .serializers import DocumentRequestSerializer, DocumentRequestDetailSerializer, DocumentSimpleDetailSerializer, DocumentStatusDetailSerializer
 from utils.formart import convert_document_multipart_to_json
 from django.db.models import OuterRef, Subquery
 #from .services import send_message_wpp_to_admin
@@ -16,16 +17,42 @@ from django.db.models import OuterRef, Subquery
 
 
 class DocumentStatusCreateAPIView(APIView):
+    """
+    Registra uma mudança de status em um DocumentRequest.
+
+    Busca o último status do pedido e delega a transição ao método
+    change_status() do modelo, que valida a transição e cria um novo
+    evento imutável (append-only). Transições inválidas retornam 400.
+    """
     permission_classes = [IsAuthenticated]
-    serializer_class = DocumentStatusSerializer
 
     def post(self, request):
-        data = request.data.copy()
-        data['user'] = request.user.pk
-        serializer = DocumentStatusSerializer(data=data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(data=serializer.data)
+        document_id = request.data.get("document")
+        new_status = request.data.get("status")
+        comment = request.data.get("comment", "")
+
+        try:
+            document = DocumentRequest.objects.get(pk=document_id)
+        except (DocumentRequest.DoesNotExist, TypeError, ValueError):
+            return Response({"document": "Pedido não encontrado."}, status=404)
+
+        last_status = document.status.order_by("-created_at").first()
+
+        if last_status is None:
+            return Response({"detail": "Pedido sem status inicial."}, status=400)
+
+        try:
+            new_event = last_status.change_status(
+                new_status=new_status,
+                user=request.user,
+                comment=comment,
+            )
+        except ValidationError as e:
+            message = e.message if hasattr(e, "message") else str(e)
+            return Response({"detail": message}, status=400)
+
+        serializer = DocumentStatusDetailSerializer(new_event)
+        return Response(data=serializer.data, status=201)
     
 
 class DocumentRequestCreateAPIView(APIView):
@@ -49,7 +76,7 @@ class DocumentRequestCreateAPIView(APIView):
     parser_classes = (MultiPartParser, FormParser)
 
     def post(self, request):
-        data = request.data
+        data = request.data.copy()  # QueryDict é imutável; copy() retorna versão mutável
         processed_data = convert_document_multipart_to_json(data, request.FILES)
         serializer = DocumentRequestSerializer(data=processed_data)
         serializer.is_valid(raise_exception=True)

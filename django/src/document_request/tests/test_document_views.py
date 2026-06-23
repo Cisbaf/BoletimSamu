@@ -70,18 +70,20 @@ class DocumentRequestDetailAPITest(APITestCase):
 
 
     def test_filter_by_cpf(self):
-        response = self.client.get(self.list_url, {"applicant__cpf": "07193369024"})
+        response = self.client.get(self.list_url, {"applicant__cpf__icontains": "07193369024"})
         results = self.get_results(response)
 
         self.assertEqual(len(results), 1)
         self.assertEqual(results[0]["applicant"]["cpf"], "07193369024")
 
     def test_search_by_name(self):
-        response = self.client.get(self.list_url, {"search": "Maria"})
+        # Busca por "Oliveira" — presente apenas no full_name de Maria Oliveira,
+        # não bate em nenhum incident.patient_name (todos usam "Maria da Silva").
+        response = self.client.get(self.list_url, {"search": "Oliveira"})
         results = self.get_results(response)
 
         self.assertEqual(len(results), 1)
-        self.assertIn("Maria", results[0]["applicant"]["full_name"])
+        self.assertIn("Oliveira", results[0]["applicant"]["full_name"])
 
     def test_filter_created_at_gte(self):
         today = timezone.now().date().isoformat()
@@ -108,7 +110,7 @@ class DocumentRequestDetailAPITest(APITestCase):
         self.assertEqual(dates, sorted(dates, reverse=True))
 
     def test_filter_no_results(self):
-        response = self.client.get(self.list_url, {"applicant__cpf": "00000000000"})
+        response = self.client.get(self.list_url, {"applicant__cpf__icontains": "00000000000"})
         results = self.get_results(response)
 
         self.assertEqual(len(results), 0)

@@ -6,6 +6,10 @@ import shutil
 from applicant.models import Applicant
 from applicant_document.models import DocumentType
 from applicant_document.serializers import ApplicantDocumentRequestSerializer
+from document_request.models import DocumentRequest
+
+# Purpose padrão usada nos testes que não testam a finalidade em si
+_PURPOSE = DocumentRequest.Purpose.DPVAT
 
 
 TEMP_MEDIA_ROOT = tempfile.mkdtemp()
@@ -37,7 +41,7 @@ class ApplicantDocumentRequestSerializerTest(TestCase):
 
         serializer = ApplicantDocumentRequestSerializer(
             data=data,
-            context={"applicant_type": Applicant.ApplicantType.PATIENT}
+            context={"applicant_type": Applicant.ApplicantType.PATIENT, "purpose": _PURPOSE}
         )
 
         self.assertTrue(serializer.is_valid(), serializer.errors)
@@ -55,7 +59,8 @@ class ApplicantDocumentRequestSerializerTest(TestCase):
             data=data,
             context={
                 "applicant_type": Applicant.ApplicantType.REPRESENTATIVE,
-                "relationship_degree": Applicant.RelationshipDegree.FAMILY
+                "relationship_degree": Applicant.RelationshipDegree.FAMILY,
+                "purpose": _PURPOSE,
             }
         )
 
@@ -79,7 +84,8 @@ class ApplicantDocumentRequestSerializerTest(TestCase):
             data=data,
             context={
                 "applicant_type": Applicant.ApplicantType.REPRESENTATIVE,
-                "relationship_degree": Applicant.RelationshipDegree.SPOUSE
+                "relationship_degree": Applicant.RelationshipDegree.SPOUSE,
+                "purpose": _PURPOSE,
             }
         )
 
@@ -103,7 +109,8 @@ class ApplicantDocumentRequestSerializerTest(TestCase):
             data=data,
             context={
                 "applicant_type": Applicant.ApplicantType.REPRESENTATIVE,
-                "relationship_degree": Applicant.RelationshipDegree.ATTORNEY
+                "relationship_degree": Applicant.RelationshipDegree.ATTORNEY,
+                "purpose": _PURPOSE,
             }
         )
 
@@ -136,7 +143,8 @@ class ApplicantDocumentRequestSerializerTest(TestCase):
         serializer = ApplicantDocumentRequestSerializer(
             data=data,
             context={
-                "applicant_type": Applicant.ApplicantType.REPRESENTATIVE
+                "applicant_type": Applicant.ApplicantType.REPRESENTATIVE,
+                "purpose": _PURPOSE,
             }
         )
 
@@ -158,7 +166,7 @@ class ApplicantDocumentRequestSerializerTest(TestCase):
 
         serializer = ApplicantDocumentRequestSerializer(
             data=data,
-            context={"applicant_type": Applicant.ApplicantType.PATIENT}
+            context={"applicant_type": Applicant.ApplicantType.PATIENT, "purpose": _PURPOSE}
         )
 
         self.assertFalse(serializer.is_valid())
@@ -172,7 +180,7 @@ class ApplicantDocumentRequestSerializerTest(TestCase):
 
         serializer = ApplicantDocumentRequestSerializer(
             data=data,
-            context={"applicant_type": Applicant.ApplicantType.PATIENT}
+            context={"applicant_type": Applicant.ApplicantType.PATIENT, "purpose": _PURPOSE}
         )
 
         self.assertFalse(serializer.is_valid())
@@ -193,7 +201,7 @@ class ApplicantDocumentRequestSerializerTest(TestCase):
 
         serializer = ApplicantDocumentRequestSerializer(
             data=data,
-            context={"applicant_type": Applicant.ApplicantType.PATIENT}
+            context={"applicant_type": Applicant.ApplicantType.PATIENT, "purpose": _PURPOSE}
         )
 
         self.assertFalse(serializer.is_valid())
@@ -211,7 +219,7 @@ class ApplicantDocumentRequestSerializerTest(TestCase):
 
         serializer = ApplicantDocumentRequestSerializer(
             data=data,
-            context={"applicant_type": Applicant.ApplicantType.PATIENT}
+            context={"applicant_type": Applicant.ApplicantType.PATIENT, "purpose": _PURPOSE}
         )
 
         self.assertFalse(serializer.is_valid())
@@ -230,7 +238,8 @@ class ApplicantDocumentRequestSerializerTest(TestCase):
             data=data,
             context={
                 "applicant_type": Applicant.ApplicantType.REPRESENTATIVE,
-                "relationship_degree": Applicant.RelationshipDegree.FAMILY
+                "relationship_degree": Applicant.RelationshipDegree.FAMILY,
+                "purpose": _PURPOSE,
             }
         )
 
@@ -249,7 +258,7 @@ class ApplicantDocumentRequestSerializerTest(TestCase):
 
         serializer = ApplicantDocumentRequestSerializer(
             data=data,
-            context={"applicant_type": Applicant.ApplicantType.PATIENT}
+            context={"applicant_type": Applicant.ApplicantType.PATIENT, "purpose": _PURPOSE}
         )
 
         self.assertFalse(serializer.is_valid())
@@ -271,7 +280,8 @@ class ApplicantDocumentRequestSerializerTest(TestCase):
             data=data,
             context={
                 "applicant_type": Applicant.ApplicantType.REPRESENTATIVE,
-                "relationship_degree": Applicant.RelationshipDegree.SPOUSE
+                "relationship_degree": Applicant.RelationshipDegree.SPOUSE,
+                "purpose": _PURPOSE,
             }
         )
 
@@ -290,7 +300,7 @@ class ApplicantDocumentRequestSerializerTest(TestCase):
 
         serializer = ApplicantDocumentRequestSerializer(
             data=data,
-            context={"applicant_type": Applicant.ApplicantType.PATIENT}
+            context={"applicant_type": Applicant.ApplicantType.PATIENT, "purpose": _PURPOSE}
         )
 
         self.assertFalse(serializer.is_valid())
@@ -309,7 +319,7 @@ class ApplicantDocumentRequestSerializerTest(TestCase):
 
         serializer = ApplicantDocumentRequestSerializer(
             data=data,
-            context={"applicant_type": Applicant.ApplicantType.PATIENT}
+            context={"applicant_type": Applicant.ApplicantType.PATIENT, "purpose": _PURPOSE}
         )
 
         self.assertFalse(serializer.is_valid())

@@ -95,10 +95,23 @@ class DocumentRequestSerializer(serializers.ModelSerializer):
 
     def validate(self, data):
         purpose = data.get("purpose")
+        other_purpose = data.get("other_purpose") or ""
         applicant_data = data.get("applicant", {})
         files = data.get("documents", [])
         types = data.get("document_types", [])
-                
+
+        # Regra de other_purpose — espelha DocumentRequest.clean() para que
+        # a validação também rode na criação via API (objects.create não chama full_clean).
+        if purpose == DocumentRequest.Purpose.OUTROS and not other_purpose.strip():
+            raise serializers.ValidationError({
+                "other_purpose": "Informe o motivo quando a finalidade for 'Outros'."
+            })
+
+        if purpose != DocumentRequest.Purpose.OUTROS and other_purpose.strip():
+            raise serializers.ValidationError({
+                "other_purpose": "Este campo só deve ser preenchido quando a finalidade for 'Outros'."
+            })
+
         if (
             purpose == DocumentRequest.Purpose.OBITO
             and applicant_data.get("applicant_type") == Applicant.ApplicantType.PATIENT

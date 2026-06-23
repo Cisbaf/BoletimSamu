@@ -128,33 +128,47 @@ class DocumentStatus(models.Model):
         db_column="status"
     )
 
-    ALLOWED_TRANSACTIONS = {
-        StatusChoices.AGUARDANDO: {StatusChoices.CONFIRMADO, StatusChoices.CANCELADO},
-        StatusChoices.CONFIRMADO: {StatusChoices.CANCELADO},
-        StatusChoices.CANCELADO: set(),  # não pode sair daqui
-    }
-
     created_at = models.DateTimeField(
         _("Criado em"),
         auto_now_add=True,
         db_column="criado_em"
     )
 
-    user = models.ForeignKey(to=User, on_delete=models.DO_NOTHING, blank=True, null=True)
+    user = models.ForeignKey(to=User, on_delete=models.SET_NULL, blank=True, null=True)
 
-    def change_status(self, new_status):
+    ALLOWED_TRANSITIONS = {
+        StatusChoices.AGUARDANDO: {StatusChoices.CONFIRMADO, StatusChoices.CANCELADO},
+        StatusChoices.CONFIRMADO: {StatusChoices.CANCELADO},
+        StatusChoices.CANCELADO: set(),  # estado terminal
+    }
+
+    def change_status(self, new_status, user=None, comment=None):
+        """
+        Valida a transição e cria um novo evento de status (append-only).
+        Nunca muta o registro atual — cada mudança gera uma nova linha imutável.
+        """
         if new_status not in dict(self.StatusChoices.choices):
-            raise ValidationError("Status inválido.")
+            raise ValidationError(f"Status inválido: '{new_status}'.")
 
-        transactions = self.ALLOWED_TRANSACTIONS.get(self.status, set())
+        allowed = self.ALLOWED_TRANSITIONS.get(self.status, set())
 
-        if new_status not in transactions:
+        if new_status not in allowed:
             raise ValidationError(
-                f"Não é permitido mudar de '{self.status}' para '{new_status}'."
+                f"Transição de '{self.status}' para '{new_status}' não é permitida."
             )
 
-        self.status = new_status
-        self.save()
-    
+        return DocumentStatus.objects.create(
+            document=self.document,
+            status=new_status,
+            user=user,
+            comment=comment,
+        )
+
+    class Meta:
+        db_table = "status_documento"
+        ordering = ["created_at"]
+        verbose_name = "Status do Documento"
+        verbose_name_plural = "Status dos Documentos"
+
     def __str__(self):
         return self.status
