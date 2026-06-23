@@ -78,11 +78,12 @@ export default function AcompanharSolicitacao() {
 
   }, [data]);
 
+  // A resposta é paginada ({ results: [...] }), nunca um array direto.
   const notFound =
     hasSearched &&
     !loading &&
-    Array.isArray(data) &&
-    data.length === 0 &&
+    data != null &&
+    data?.results?.length === 0 &&
     queryProtocol.trim() !== "";
 
   function syncUrl(protocol: string, created?: boolean) {

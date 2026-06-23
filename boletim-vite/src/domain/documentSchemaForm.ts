@@ -13,7 +13,7 @@ export const CITIES = [
   "MAGE",
   "MESQUITA",
   "NILÓPOLIS",
-  "NOVA IGUACU",
+  "NOVA IGUAÇU",
   "PARACAMBI",
   "QUEIMADOS",
   "SAO JOAO DE MERITI",

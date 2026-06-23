@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "./useToast";
@@ -13,7 +13,7 @@ type UseGetOptions = {
 export function useGetAuth<T = any>({ url, params, autoFetch = true, transform }: UseGetOptions) {
     const { token, logout } = useAuth();
     const [data, setData] = useState<T | null>(null);
-    const [loading, setLoading] = useState(autoFetch);
+    const [loading, setLoading] = useState(false);
     const [error, setError] = useState<any>(null);
     const { info } = useToast();
     const navigate = useNavigate();
@@ -62,11 +62,9 @@ export function useGetAuth<T = any>({ url, params, autoFetch = true, transform }
     }
   }, [url, JSON.stringify(params)]); // 👈 garante atualização quando params mudar
 
-//   useEffect(() => {
-//     if (autoFetch) {
-//       fetchData();
-//     }
-//   }, [fetchData, autoFetch]);
+  useEffect(() => {
+    if (autoFetch) fetchData();
+  }, [fetchData, autoFetch]);
 
   return {
     data,
