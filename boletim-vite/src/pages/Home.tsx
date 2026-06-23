@@ -8,7 +8,7 @@ export default function HomePage() {
     <Box maxW="900px" mx="auto">
 
       {/* Header */}
-      <Box mb={10}>
+      <Box mb={10} mt={10}>
         <Text
           fontSize={["20px", "24px", "28px"]}
           fontWeight="800"
