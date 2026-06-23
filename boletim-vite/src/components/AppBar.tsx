@@ -58,7 +58,7 @@ export default function AppBar() {
             </Box>
             <Box>
               <Text fontWeight="700" fontSize="14px" color="#111827" lineHeight={1.1}>
-                SAMU 192
+                 Cópia de Boletim
               </Text>
               <Text fontSize="9px" color="#9CA3AF" letterSpacing="0.3px">
                 CISBAF · Sistema de Solicitações

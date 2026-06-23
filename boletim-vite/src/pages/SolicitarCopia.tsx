@@ -58,8 +58,8 @@ function StepForm() {
   return (
     <StepperRequestProvider>
       <StepperForm
-        brandName="SAMU 192"
-        brandSubtitle="Solicitação de Cópia de Boletim"
+        brandName="Solicitação de Cópia de Boletim"
+        brandSubtitle="Samu"
         steps={[
           {
             title: "Dados do Solicitante",
