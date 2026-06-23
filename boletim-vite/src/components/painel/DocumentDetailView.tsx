@@ -1,12 +1,5 @@
-import {
-  Box,
-  Heading,
-  Text,
-  Grid,
-  GridItem,
-  VStack,
-  Flex,
-} from "@chakra-ui/react";
+import { Box, Flex, Grid, GridItem, Text } from "@chakra-ui/react";
+import type { ReactNode } from "react";
 import type { DocumentDetail } from "../../domain/documentDetail";
 import BadgeStatusDetail from "./BadgeStatusDetail";
 import BadgeDaysAwaiting from "./BadgeDaysAwaiting";
@@ -17,140 +10,159 @@ interface Props {
   data: DocumentDetail;
 }
 
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+function SectionTitle({ children }: { children: ReactNode }) {
+  return (
+    <Flex align="center" gap={2} mb={3}>
+      <Box w="3px" h="16px" bg="#2563EB" borderRadius="full" flexShrink={0} />
+      <Text fontSize="13px" fontWeight="700" color="#374151" letterSpacing="0.2px">
+        {children}
+      </Text>
+    </Flex>
+  )
+}
+
+function LV({ label, value }: { label: string; value?: string | null }) {
+  return (
+    <Box>
+      <Text
+        fontSize="10px"
+        fontWeight="700"
+        color="#9CA3AF"
+        textTransform="uppercase"
+        letterSpacing="0.6px"
+        mb="2px"
+      >
+        {label}
+      </Text>
+      <Text fontSize="13px" fontWeight="500" color="#111827">
+        {value || <span style={{ color: "#D1D5DB" }}>—</span>}
+      </Text>
+    </Box>
+  )
+}
+
+function Section({ children }: { children: ReactNode }) {
+  return (
+    <Box
+      bg="white"
+      border="1px solid #E5E7EB"
+      borderRadius="12px"
+      p={4}
+    >
+      {children}
+    </Box>
+  )
+}
+
+// ─── DocumentDetailView ───────────────────────────────────────────────────────
+
 export default function DocumentDetailView({ data }: Props) {
   const latestStatus = data.status?.[data.status.length - 1];
 
+  const applicantLabel = [
+    APPLICANT_TYPE_LABELS[data.applicant.applicantType],
+    data.applicant.relationshipDegree
+      ? `› ${RELATIONSHIP_DEGREE_LABELS[data.applicant.relationshipDegree]}`
+      : null,
+  ]
+    .filter(Boolean)
+    .join(" ");
+
   return (
-    <Flex
-      p={1}
-      bg="gray.50"
-      direction={"column"}
-      gap={5}
-      borderRadius="lg">
-      {/* HEADER */}
-      <VStack align="stretch" gap={2}>
-        <Heading size="md" color="blue.600">
-          Solicitação Nº {data.protocol}
-        </Heading>
+    <Flex direction="column" gap={4}>
 
-          <Text>
-            <strong>Solicitante:</strong>{" "}
-            {APPLICANT_TYPE_LABELS[data.applicant.applicantType]}
-            {" "}{data.applicant.relationshipDegree && `> ${RELATIONSHIP_DEGREE_LABELS[data.applicant.relationshipDegree]}`}
-          </Text>
-        <Grid templateColumns="repeat(3, 1fr)" gap={4}>
-          <Text>
-            <strong>Data de Criação:</strong>{" "}
-            {new Date(data.createdAt).toLocaleString()}
-          </Text>
-
-          <Text textAlign="right">
-            <strong>Status: </strong>
-            <BadgeStatusDetail props={latestStatus}/>
-            { latestStatus.status == "aguardando" &&
-            <BadgeDaysAwaiting
-              days={daysWaiting(data.createdAt)}/>
-            }
-          </Text>
-        </Grid>
-      </VStack>
-
-      {/* <Divider my={4} /> */}
-
-      {/* DADOS DO REQUERENTE */}
-      <Heading size="md" color="blue.600" mb={-2}>
-        Dados do Requerente
-      </Heading>
-
-      <Grid templateColumns="repeat(2, 1fr)" gap={3}>
-        <GridItem>
-          <Text>
-            <strong>Nome Completo:</strong> {data.applicant.fullName}
-          </Text>
-          <Text>
-            <strong>RG:</strong> {data.applicant.rg}
-          </Text>
-          <Text>
-            <strong>Email:</strong> {data.applicant.email}
-          </Text>
-          <Text>
-            <strong>Finalidade:</strong>{" "}
-            {data.otherPurpose || data.purpose}
-          </Text>
-        </GridItem>
-
-        <GridItem>
-          <Text>
-            <strong>CPF:</strong> {data.applicant.cpf}
-          </Text>
-          <Text>
-            <strong>Telefone:</strong> {data.applicant.phone}
-          </Text>
-          <Text>
-            <strong>Endereço:</strong> {data.applicant.address}
-          </Text>
-          <Text>
-            <strong>Motivo da Solicitação:</strong>{" "}
-            {data.incident.reason}
-          </Text>
-        </GridItem>
-      </Grid>
-
-      {/* <Divider my={4} /> */}
-
-      {/* DADOS DA OCORRÊNCIA */}
-      <Heading size="md" color="blue.600" mb={-2}>
-        Dados da Ocorrência
-      </Heading>
-
-      <Grid templateColumns="repeat(2, 1fr)" gap={3}>
-        <GridItem>
-          <Text>
-            <strong>Paciente:</strong> {data.incident.patientName}
-          </Text>
-          <Text>
-            <strong>Hora da Ocorrência:</strong> {data.incident.time}
-          </Text>
-          <Text>
-            <strong>Bairro:</strong> {data.incident.neighborhood}
-          </Text>
-          <Text>
-            <strong>Local Atendimento:</strong>{" "}
-            {data.incident.attendanceLocation}
-          </Text>
-        </GridItem>
-
-        <GridItem>
-          <Text>
-            <strong>Data da Ocorrência:</strong>{" "}
-            {data.incident.date}
-          </Text>
-          <Text>
-            <strong>Endereço:</strong> {data.incident.address}
-          </Text>
-          <Text>
-            <strong>Município:</strong> {data.incident.city}
-          </Text>
-        </GridItem>
-      </Grid>
-
-      {/* OBSERVAÇÕES */}
-      {data.incident.notes && (
-        <>
-          {/* <Divider my={4} /> */}
-          <Heading size="sm" mb={2}>
-            Observações
-          </Heading>
-          <Box
-            p={3}
-            border="1px solid"
-            borderColor="gray.200"
-            borderRadius="md"
-            bg="white"
-          >
-            <Text>{data.incident.notes}</Text>
+      {/* ── Header da solicitação ──────────────────────────────────────── */}
+      <Box
+        bg="#EFF6FF"
+        border="1px solid #BFDBFE"
+        borderRadius="12px"
+        p={4}
+      >
+        <Flex justify="space-between" align="flex-start" wrap="wrap" gap={3}>
+          <Box>
+            <Text fontSize="11px" fontWeight="700" color="#60A5FA" textTransform="uppercase" letterSpacing="0.6px" mb={1}>
+              Protocolo
+            </Text>
+            <Text fontSize="20px" fontWeight="800" color="#1D4ED8" letterSpacing="-0.3px" fontFamily="mono">
+              #{data.protocol}
+            </Text>
+            <Text fontSize="12px" color="#6B7280" mt={1}>
+              {applicantLabel}
+            </Text>
           </Box>
-        </>
+
+          <Flex direction="column" align="flex-end" gap={2}>
+            <BadgeStatusDetail props={latestStatus} />
+            {latestStatus.status === "aguardando" && (
+              <BadgeDaysAwaiting days={daysWaiting(data.createdAt)} />
+            )}
+            <Text fontSize="11px" color="#6B7280" mt={1}>
+              {new Date(data.createdAt).toLocaleString("pt-BR")}
+            </Text>
+          </Flex>
+        </Flex>
+      </Box>
+
+      {/* ── Dados do Requerente ────────────────────────────────────────── */}
+      <Section>
+        <SectionTitle>Dados do Requerente</SectionTitle>
+        <Grid templateColumns="repeat(2, 1fr)" gap={4}>
+          <GridItem>
+            <Flex direction="column" gap={3}>
+              <LV label="Nome Completo" value={data.applicant.fullName} />
+              <LV label="RG" value={data.applicant.rg} />
+              <LV label="Email" value={data.applicant.email} />
+              <LV label="Finalidade" value={data.otherPurpose || data.purpose} />
+            </Flex>
+          </GridItem>
+          <GridItem>
+            <Flex direction="column" gap={3}>
+              <LV label="CPF" value={data.applicant.cpf} />
+              <LV label="Telefone" value={data.applicant.phone} />
+              <LV label="Endereço" value={data.applicant.address} />
+              <LV label="Motivo da Solicitação" value={data.incident.reason} />
+            </Flex>
+          </GridItem>
+        </Grid>
+      </Section>
+
+      {/* ── Dados da Ocorrência ────────────────────────────────────────── */}
+      <Section>
+        <SectionTitle>Dados da Ocorrência</SectionTitle>
+        <Grid templateColumns="repeat(2, 1fr)" gap={4}>
+          <GridItem>
+            <Flex direction="column" gap={3}>
+              <LV label="Nome do Paciente" value={data.incident.patientName} />
+              <LV label="Data da Ocorrência" value={data.incident.date} />
+              <LV label="Hora da Ocorrência" value={data.incident.time} />
+            </Flex>
+          </GridItem>
+          <GridItem>
+            <Flex direction="column" gap={3}>
+              <LV label="Município" value={data.incident.city} />
+              <LV label="Bairro" value={data.incident.neighborhood} />
+              <LV label="Endereço" value={data.incident.address} />
+            </Flex>
+          </GridItem>
+        </Grid>
+
+        {data.incident.attendanceLocation && (
+          <Box mt={4} pt={4} borderTop="1px solid #F3F4F6">
+            <LV label="Local de Atendimento" value={data.incident.attendanceLocation} />
+          </Box>
+        )}
+      </Section>
+
+      {/* ── Observações ────────────────────────────────────────────────── */}
+      {data.incident.notes && (
+        <Section>
+          <SectionTitle>Observações</SectionTitle>
+          <Text fontSize="13px" color="#374151" lineHeight={1.7}>
+            {data.incident.notes}
+          </Text>
+        </Section>
       )}
     </Flex>
   );

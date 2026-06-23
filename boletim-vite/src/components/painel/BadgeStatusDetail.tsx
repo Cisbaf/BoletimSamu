@@ -1,39 +1,51 @@
-import { Badge, Flex } from "@chakra-ui/react";
-import { HiCheckCircle, HiExclamationCircle, HiExclamation } from "react-icons/hi";
-import type { Status } from "../../domain/documentDetail";
+import type { Status } from "../../domain/documentDetail"
 
-export default function BadgeStatusDetail({props}: {props: Status}) {
+// ─── Config ──────────────────────────────────────────────────────────────────
 
-  let colorPalette: string;
-  let Icon: any;
+interface BadgeCfg {
+  bg: string
+  color: string
+  border: string
+  label: string
+}
 
-  if (props.status == "confirmado") {
-    colorPalette = "green";
-    Icon = HiCheckCircle;
-  } else if (props.status == "aguardando") {
-    colorPalette = "yellow";
-    Icon = HiExclamationCircle;
-  } else {
-    colorPalette = "red";
-    Icon = HiExclamation;
+const STATUS_CONFIG: Record<string, BadgeCfg> = {
+  confirmado: { bg: "#DCFCE7", color: "#166534", border: "#BBF7D0", label: "Confirmado" },
+  aguardando: { bg: "#FEF9C3", color: "#854D0E", border: "#FDE68A", label: "Aguardando" },
+  cancelado:  { bg: "#FEE2E2", color: "#991B1B", border: "#FECACA", label: "Cancelado"  },
+}
+
+// ─── BadgeStatusDetail ───────────────────────────────────────────────────────
+
+export default function BadgeStatusDetail({ props }: { props: Status }) {
+  const cfg: BadgeCfg = STATUS_CONFIG[props.status] ?? {
+    bg: "#F3F4F6", color: "#6B7280", border: "#E5E7EB", label: props.status,
   }
 
   return (
-    <Badge
-      variant="solid"
-      colorPalette={colorPalette}
-      display="inline-flex"
-      alignItems="center"
-      gap={1}
-      borderRadius="full"
-      px={2}
-      py={1}
-      fontSize="xs"
-    > 
-        <Flex gap={1} alignItems={"center"}>
-            <Icon />
-            {props.status}
-        </Flex>
-    </Badge>
-  );
-};
+    <span style={{
+      display: "inline-flex",
+      alignItems: "center",
+      gap: "5px",
+      padding: "3px 10px",
+      background: cfg.bg,
+      color: cfg.color,
+      border: `1px solid ${cfg.border}`,
+      borderRadius: "9999px",
+      fontSize: "11px",
+      fontWeight: "600",
+      whiteSpace: "nowrap",
+      lineHeight: 1.5,
+    }}>
+      <span style={{
+        width: "6px",
+        height: "6px",
+        borderRadius: "50%",
+        background: cfg.color,
+        flexShrink: 0,
+        display: "inline-block",
+      }} />
+      {cfg.label}
+    </span>
+  )
+}

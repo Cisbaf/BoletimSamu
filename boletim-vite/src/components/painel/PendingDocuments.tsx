@@ -1,4 +1,4 @@
-import { Table, Text } from "@chakra-ui/react";
+import { Box, Flex, Skeleton, Stack, Table } from "@chakra-ui/react";
 import React from "react";
 import { useFilters } from "../../context/FilterContext";
 import { useGetAuth } from "../../hooks/useGetAuth";
@@ -10,59 +10,85 @@ import BadgeDaysAwaiting from "./BadgeDaysAwaiting";
 import { daysWaiting } from "../../utils/dates";
 import { DocumentDetailProvider } from "../../context/DocumentDetail";
 import { DocumentShowDetail, type DocumentShowDetailType } from "./DocumentShowDetail";
+import { ApiBaseUrl } from "../../settings"
 
+// ─── Loading skeleton ─────────────────────────────────────────────────────────
+
+function LoadingSkeleton() {
+  return (
+    <Stack gap={0}>
+      {[1, 2, 3, 4].map((i) => (
+        <Flex
+          key={i}
+          gap={4}
+          px={4}
+          py="14px"
+          borderBottom="1px solid #F3F4F6"
+          align="center"
+        >
+          <Skeleton h="22px" w="72px" borderRadius="6px" />
+          <Skeleton h="16px" flex={1} borderRadius="6px" />
+          <Skeleton h="16px" w="90px" borderRadius="6px" />
+          <Skeleton h="22px" w="110px" borderRadius="full" />
+          <Skeleton h="32px" w="34px" borderRadius="8px" />
+        </Flex>
+      ))}
+    </Stack>
+  )
+}
+
+// ─── PendingDocuments ─────────────────────────────────────────────────────────
 
 export default function PendingDocuments() {
-    const documentDetailRef = React.useRef<DocumentShowDetailType | null>(null);
-    const { queryParams, setFiltersBatch, filters } = useFilters();
-    const hookUseDocumentList = useDocumentList();
-    const {documents, setAll } = hookUseDocumentList;
-    const { data, refetch, loading } = useGetAuth({
-        url: "/document/requests/",
-        params: queryParams,
-        autoFetch: false,
-        transform: ToCamelCase,
-    });
 
-    // ✅ define status inicial
-    React.useEffect(() => {
-        setFiltersBatch({
-            status: "aguardando",
-            page: 1
-        })
-    }, []);
+  const documentDetailRef = React.useRef<DocumentShowDetailType | null>(null);
+  const { queryParams, setFiltersBatch, filters } = useFilters();
+  const hookUseDocumentList = useDocumentList();
+  const { documents, setAll } = hookUseDocumentList;
+  const { data, refetch, loading } = useGetAuth({
+    url: `${ApiBaseUrl}/document/requests/`,
+    params: queryParams,
+    autoFetch: false,
+    transform: ToCamelCase,
+  });
 
-    // ✅ refetch quando filtros mudam
-    React.useEffect(() => {
-        if (!filters.status) return;
-        refetch();
-    }, [queryParams]);
+  React.useEffect(() => {
+    setFiltersBatch({ status: "aguardando", page: 1 });
+  }, []);
 
-    React.useEffect(()=>{
-        if (data && data.results) setAll(data.results);
-    }, [data]);
+  React.useEffect(() => {
+    if (!filters.status) return;
+    refetch();
+  }, [queryParams]);
 
-    if (loading) return <Text>Carregando...</Text>;
+  React.useEffect(() => {
+    if (data && data.results) setAll(data.results);
+  }, [data]);
 
-    return (
-        <>
-            <DocumentTable
-                documents={documents}
-                showDetail={documentDetailRef.current?.showDocument}
-                renderExtraCols={["Tempo de Espera"]}
-                renderRow={(item)=> (
-                    <Table.Cell>
-                        <BadgeDaysAwaiting
-                            days={daysWaiting(item.createdAt)}/>
-                    </Table.Cell>
-                )}
-                />
+  return (
+    <>
+      {loading ? (
+        <LoadingSkeleton />
+      ) : (
+        <DocumentTable
+          documents={documents}
+          showDetail={documentDetailRef.current?.showDocument}
+          renderExtraCols={["Tempo de Espera"]}
+          renderRow={(item) => (
+            <Table.Cell px={4} py={4}>
+              <BadgeDaysAwaiting days={daysWaiting(item.createdAt)} />
+            </Table.Cell>
+          )}
+        />
+      )}
 
-            {/* 📄 PAGINAÇÃO */}
-            <PaginationForDocs count={data?.count} pageSize={5}/>
-            <DocumentDetailProvider useDocumentList={hookUseDocumentList} removedForNewStatus>
-                <DocumentShowDetail ref={documentDetailRef}/>
-            </DocumentDetailProvider>
-        </>
-    );
+      <Box mt={4}>
+        <PaginationForDocs count={data?.count} pageSize={5} />
+      </Box>
+
+      <DocumentDetailProvider useDocumentList={hookUseDocumentList} removedForNewStatus>
+        <DocumentShowDetail ref={documentDetailRef} />
+      </DocumentDetailProvider>
+    </>
+  );
 }

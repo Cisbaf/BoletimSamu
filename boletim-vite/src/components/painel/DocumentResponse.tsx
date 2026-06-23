@@ -1,86 +1,176 @@
-import { Button, Field, Flex, Show, Text, Textarea } from "@chakra-ui/react";
+import { Box, Field, Flex, Show, Text, Textarea } from "@chakra-ui/react";
 import React from "react";
-import { DrawerBody, DrawerCloseTrigger, DrawerContent, DrawerFooter, DrawerHeader, DrawerRoot } from "../ui/drawer";
+import {
+  DrawerBody,
+  DrawerCloseTrigger,
+  DrawerContent,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerRoot,
+} from "../ui/drawer";
 import AutomaticResponses from "./AutomaticResponses";
 import { useDocumentDetailContext } from "../../context/DocumentDetail";
 
-
-interface DocumentResponse {
-    isOpen: boolean;
-    onOpenChange: (open: boolean) => void;
+interface DocumentResponseProps {
+  isOpen: boolean;
+  onOpenChange: (open: boolean) => void;
 }
 
-export default function DocumentResponse({isOpen, onOpenChange}: DocumentResponse){
-    const [statusResponse, setStatusResponse] = React.useState<"confirmado" | "cancelado">("confirmado");
-    const [text, setText] = React.useState("");
-    const { document, newStatus } = useDocumentDetailContext();
+// ─── Botão de decisão ─────────────────────────────────────────────────────────
 
-    const newStatusHandle = async () => {
-        const response = await newStatus(statusResponse, text);
-        if (response) resetState();
-    }
+interface DecisionButtonProps {
+  label: string
+  active: boolean
+  color: string
+  activeBg: string
+  activeBorder: string
+  onClick: () => void
+}
 
-    const resetState = () => {
-        setStatusResponse("confirmado");
-        setText("");
-        onOpenChange(false);
-    }
+function DecisionButton({ label, active, color, activeBg, activeBorder, onClick }: DecisionButtonProps) {
+  return (
+    <Box
+      role="button"
+      tabIndex={0}
+      flex={1}
+      textAlign="center"
+      py="10px"
+      borderRadius="10px"
+      fontSize="13px"
+      fontWeight="700"
+      cursor="pointer"
+      border="2px solid"
+      transition="all 0.15s"
+      onClick={onClick}
+      onKeyDown={(e) => { if (e.key === "Enter") onClick() }}
+      bg={active ? activeBg : "white"}
+      borderColor={active ? activeBorder : "#E5E7EB"}
+      color={active ? color : "#9CA3AF"}
+      boxShadow={active ? `0 2px 6px ${activeBg}80` : "none"}
+    >
+      {label}
+    </Box>
+  )
+}
 
-    return (
-     <DrawerRoot size={"sm"} open={isOpen} onOpenChange={resetState}>
-        <DrawerContent>
-            <DrawerHeader>
-                <Text fontWeight="bold">Atualizar Resposta Solicitação</Text>
-            </DrawerHeader>
+// ─── DocumentResponse ─────────────────────────────────────────────────────────
 
-            <DrawerCloseTrigger />
+export default function DocumentResponse({ isOpen, onOpenChange }: DocumentResponseProps) {
+  const [statusResponse, setStatusResponse] = React.useState<"confirmado" | "cancelado">("confirmado");
+  const [text, setText] = React.useState("");
+  const { document, newStatus } = useDocumentDetailContext();
 
-            <DrawerBody>
-                <Show when={document}>
-                    {() => (
-                     <Flex direction="column" gap={4}>
-                        <Flex gap={2}>
-                            <Button
-                            flex={1}
-                            variant={statusResponse === "confirmado" ? "solid" : "outline"}
-                            colorPalette="green"
-                            onClick={() => setStatusResponse("confirmado")}
-                            >
-                            Aprovar
-                            </Button>
+  const handleSubmit = async () => {
+    const response = await newStatus(statusResponse, text);
+    if (response) resetState();
+  };
 
-                            <Button
-                            flex={1}
-                            variant={statusResponse === "cancelado" ? "solid" : "outline"}
-                            colorPalette="red"
-                            onClick={() => setStatusResponse("cancelado")}
-                            >
-                            Rejeitar
-                            </Button>
-                        </Flex>
-                        
-                        <AutomaticResponses status={statusResponse} setValue={setText}/>
+  const resetState = () => {
+    setStatusResponse("confirmado");
+    setText("");
+    onOpenChange(false);
+  };
 
-                        <Field.Root required>
-                            <Field.Label>
-                            Resposta <Field.RequiredIndicator />
-                            </Field.Label>
-                            <Textarea
-                                placeholder="Escreva a justificativa"
-                                value={text}
-                                height="250px"
-                                onChange={(e) => setText(e.target.value)}
-                                variant="subtle" />
-                            <Field.HelperText>Máximo 500 caracteres.</Field.HelperText>
-                        </Field.Root>
-                        </Flex>
-                    )}
-                </Show>
-            </DrawerBody>
-            <DrawerFooter>
-                <Button onClick={newStatusHandle}>Enviar Resposta</Button>
-            </DrawerFooter>
-        </DrawerContent>
-        </DrawerRoot>
-    );
+  return (
+    <DrawerRoot size="sm" open={isOpen} onOpenChange={resetState}>
+      <DrawerContent>
+
+        <DrawerHeader borderBottom="1px solid #F3F4F6" pb={4}>
+          <Text fontWeight="700" fontSize="15px" color="#111827">
+            Atualizar Status da Solicitação
+          </Text>
+        </DrawerHeader>
+
+        <DrawerCloseTrigger />
+
+        <DrawerBody py={5}>
+          <Show when={document}>
+            {() => (
+              <Flex direction="column" gap={5}>
+
+                {/* Decisão: Aprovar / Rejeitar */}
+                <Box>
+                  <Text fontSize="12px" fontWeight="600" color="#374151" mb={2}>
+                    Decisão
+                  </Text>
+                  <Flex gap={3}>
+                    <DecisionButton
+                      label="✓ Aprovar"
+                      active={statusResponse === "confirmado"}
+                      color="#166534"
+                      activeBg="#DCFCE7"
+                      activeBorder="#22C55E"
+                      onClick={() => setStatusResponse("confirmado")}
+                    />
+                    <DecisionButton
+                      label="✕ Rejeitar"
+                      active={statusResponse === "cancelado"}
+                      color="#991B1B"
+                      activeBg="#FEE2E2"
+                      activeBorder="#EF4444"
+                      onClick={() => setStatusResponse("cancelado")}
+                    />
+                  </Flex>
+                </Box>
+
+                {/* Respostas automáticas */}
+                <Box>
+                  <Text fontSize="12px" fontWeight="600" color="#374151" mb={2}>
+                    Respostas Rápidas
+                  </Text>
+                  <AutomaticResponses status={statusResponse} setValue={setText} />
+                </Box>
+
+                {/* Texto da resposta */}
+                <Field.Root required>
+                  <Field.Label fontSize="12px" fontWeight="600" color="#374151" mb={1}>
+                    Justificativa <Field.RequiredIndicator />
+                  </Field.Label>
+                  <Textarea
+                    placeholder="Escreva a justificativa..."
+                    value={text}
+                    height="200px"
+                    onChange={(e) => setText(e.target.value)}
+                    bg="#F9FAFB"
+                    border="1px solid #E5E7EB"
+                    borderRadius="10px"
+                    fontSize="13px"
+                    _focus={{ borderColor: "#2563EB", boxShadow: "0 0 0 3px rgba(37,99,235,0.12)" }}
+                    resize="vertical"
+                  />
+                  <Field.HelperText fontSize="11px" color="#9CA3AF">
+                    Máximo 500 caracteres.
+                  </Field.HelperText>
+                </Field.Root>
+              </Flex>
+            )}
+          </Show>
+        </DrawerBody>
+
+        <DrawerFooter borderTop="1px solid #F3F4F6" pt={4}>
+          <Box
+            role="button"
+            tabIndex={0}
+            onClick={handleSubmit}
+            onKeyDown={(e) => { if (e.key === "Enter") handleSubmit() }}
+            w="full"
+            textAlign="center"
+            py="11px"
+            bg="#2563EB"
+            color="white"
+            borderRadius="10px"
+            fontWeight="700"
+            fontSize="14px"
+            cursor="pointer"
+            transition="all 0.15s"
+            _hover={{ bg: "#1D4ED8" }}
+            boxShadow="0 2px 8px rgba(37,99,235,0.28)"
+          >
+            Enviar Resposta
+          </Box>
+        </DrawerFooter>
+
+      </DrawerContent>
+    </DrawerRoot>
+  );
 }
