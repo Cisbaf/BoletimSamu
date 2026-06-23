@@ -104,7 +104,7 @@ function StepperInner({ steps, brandName, brandSubtitle }: StepperProps) {
       display="flex"
       flexDirection="column"
       overflow="hidden"
-      maxW="50%"
+      maxW="680px"
       mx="auto"
       w="100%"
     >
