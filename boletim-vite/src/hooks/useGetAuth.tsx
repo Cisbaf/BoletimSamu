@@ -1,46 +1,69 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "./useToast";
+import { tryRefreshToken } from "../helpers/jwtUtils";
 
 type UseGetOptions = {
   url: string;
   params?: Record<string, any>;
-  autoFetch?: boolean; // se roda automaticamente
+  autoFetch?: boolean;
   transform?: (data: any) => any;
 };
 
 export function useGetAuth<T = any>({ url, params, autoFetch = true, transform }: UseGetOptions) {
-    const { token, logout } = useAuth();
-    const [data, setData] = useState<T | null>(null);
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState<any>(null);
-    const { info } = useToast();
-    const navigate = useNavigate();
+  const { token, refreshToken, logout, updateAccess } = useAuth();
+  const [data, setData] = useState<T | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<any>(null);
+  const { info } = useToast();
+  const navigate = useNavigate();
 
-  const buildUrl = () => {
+  // Refs para sempre ter os valores mais recentes sem invalidar fetchData
+  const tokenRef = useRef(token);
+  const refreshTokenRef = useRef(refreshToken);
+
+  useEffect(() => { tokenRef.current = token; }, [token]);
+  useEffect(() => { refreshTokenRef.current = refreshToken; }, [refreshToken]);
+
+  const buildUrl = useCallback(() => {
     if (!params) return url;
     const query = new URLSearchParams(params).toString();
-
     return `${url}?${query}`;
-  };
+  }, [url, JSON.stringify(params)]);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
     setError(null);
 
-    try {
-      const response = await fetch(buildUrl(), {
+    const doFetch = async (accessToken: string | null) => {
+      return fetch(buildUrl(), {
         headers: {
-        ...(token && { Authorization: `Bearer ${token}` }),
-        }
+          ...(accessToken && { Authorization: `Bearer ${accessToken}` }),
+        },
       });
+    };
 
-      if (response.status == 401) {
-        info({title: "Sessão expirada!", description: "Necessário realizar o login novamente!"})
-        logout();
-        navigate("/login");
-        return;
+    try {
+      let response = await doFetch(tokenRef.current);
+
+      if (response.status === 401) {
+        const refresh = refreshTokenRef.current;
+        if (refresh) {
+          const newAccess = await tryRefreshToken(refresh);
+          if (newAccess) {
+            updateAccess(newAccess);
+            tokenRef.current = newAccess;
+            response = await doFetch(newAccess);
+          }
+        }
+
+        if (response.status === 401) {
+          info({ title: "Sessão expirada!", description: "Necessário realizar o login novamente!" });
+          logout();
+          navigate("/login");
+          return;
+        }
       }
 
       const result = await response.json();
@@ -52,7 +75,8 @@ export function useGetAuth<T = any>({ url, params, autoFetch = true, transform }
           data: result,
         };
       }
-      setData(transform? transform(result) : result);
+
+      setData(transform ? transform(result) : result);
       return result;
     } catch (err: any) {
       setError(err);
@@ -60,7 +84,7 @@ export function useGetAuth<T = any>({ url, params, autoFetch = true, transform }
     } finally {
       setLoading(false);
     }
-  }, [url, JSON.stringify(params)]); // 👈 garante atualização quando params mudar
+  }, [url, JSON.stringify(params)]); // 👈 token via ref — não invalida o callback
 
   useEffect(() => {
     if (autoFetch) fetchData();
@@ -70,6 +94,6 @@ export function useGetAuth<T = any>({ url, params, autoFetch = true, transform }
     data,
     loading,
     error,
-    refetch: fetchData, // 🔁 manual
+    refetch: fetchData,
   };
 }

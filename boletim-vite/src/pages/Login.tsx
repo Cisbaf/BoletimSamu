@@ -56,7 +56,7 @@ export default function Login() {
         throw new Error(data?.detail || "Erro ao fazer login");
       }
 
-      login(data.access);
+      login(data.access, data.refresh);
       navigate("/painel");
       success({
         title: "Sucesso",
