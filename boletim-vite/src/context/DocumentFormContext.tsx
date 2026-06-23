@@ -13,12 +13,12 @@ interface DocumentFormType {
 const DocumentFormContext = React.createContext<DocumentFormType | null>(null);
 
 interface DocumentFormProps {
-  submitFom: (data: DocumentFormData)=> Promise<void>;
+  submitForm: (data: DocumentFormData)=> Promise<void>;
   children: any;
   fakeData?: boolean; 
 }
 
-export function DocumentFormProvider({submitFom ,children, fakeData}: DocumentFormProps) {
+export function DocumentFormProvider({submitForm ,children, fakeData}: DocumentFormProps) {
     const form = useForm<DocumentFormData>({
         resolver: zodResolver(DocumentSchema),
         defaultValues: fakeData? initialFilling : {} 
@@ -32,7 +32,7 @@ export function DocumentFormProvider({submitFom ,children, fakeData}: DocumentFo
 
   return (
     <DocumentFormContext.Provider value={{form}}>
-      <form onSubmit={handleSubmit(submitFom, onError)}>{children}</form>
+      <form onSubmit={handleSubmit(submitForm, onError)}>{children}</form>
     </DocumentFormContext.Provider>
   )
 }

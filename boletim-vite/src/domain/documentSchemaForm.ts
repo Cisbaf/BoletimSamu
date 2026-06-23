@@ -66,10 +66,20 @@ export const ApplicantSchema = z
       .refine(isValidCPF, {
         message: "CPF inválido",
       }),
-    rg: z.string().min(8, "Verifique o RG!"),
+    rg: z
+      .string()
+      .transform((v) => v.replace(/[.\-]/g, ""))
+      .pipe(z.string().regex(/^\d{7,9}$/, "RG deve conter entre 7 e 9 dígitos")),
     email: z.string().email("E-mail incorreto!"),
     address: z.string().nonempty("Preencha o endereço"),
-    phone: z.string().nonempty("Preencha o telefone"),
+    phone: z
+      .string()
+      .transform((v) => v.replace(/\D/g, ""))
+      .pipe(
+        z.string()
+          .length(11, "Telefone deve ter DDD + 9 dígitos (11 no total)")
+          .regex(/^\d{2}9\d{8}$/, "Celular inválido: use DDD + 9 + 8 dígitos")
+      ),
   })
   .superRefine((data, ctx) => {
     // 🔴 PATIENT não pode ter relationship
@@ -139,6 +149,29 @@ export const REQUIRED_DOCUMENTS = {
   }
 } as const;
 
+/** Fonte única de verdade para documentos obrigatórios.
+ *  Usada tanto pelo superRefine do schema quanto pelo componente de anexos. */
+export function getRequiredDocuments(
+  applicantType?: string,
+  relationship?: string,
+  purpose?: string,
+): RequiredDocument[] {
+  let docs: RequiredDocument[] = [];
+
+  if (applicantType === "PATIENT") {
+    docs = [...REQUIRED_DOCUMENTS.PATIENT.default];
+  } else if (applicantType === "REPRESENTATIVE" && relationship) {
+    const key = relationship as keyof typeof REQUIRED_DOCUMENTS.REPRESENTATIVE;
+    docs = [...REQUIRED_DOCUMENTS.REPRESENTATIVE[key]];
+  }
+
+  if (purpose === "OBITO" && !docs.includes("DEATH_CERTIFICATE")) {
+    docs.push("DEATH_CERTIFICATE");
+  }
+
+  return docs;
+}
+
 
 export const DocumentsSchema = z
   .record(
@@ -156,28 +189,9 @@ export const DocumentSchema = z.object({
     const { applicant_type, relationship_degree } = data.applicant;
     const uploadedDocs = Object.keys(data.documents ?? {});
 
-    let requiredDocs: RequiredDocument[] = [];
+    const requiredDocs = getRequiredDocuments(applicant_type, relationship_degree, data.purpose);
 
-    if (applicant_type === "PATIENT") {
-      requiredDocs = [...REQUIRED_DOCUMENTS.PATIENT.default];
-    }
-
-    if (applicant_type === "REPRESENTATIVE" && relationship_degree) {
-      requiredDocs = [
-        ...REQUIRED_DOCUMENTS.REPRESENTATIVE[relationship_degree],
-      ];
-    }
-
-    // 🔴 REGRA NOVA: Óbito sempre exige certidão de óbito
-    if (data.purpose === "OBITO") {
-      if (!requiredDocs.includes("DEATH_CERTIFICATE")) {
-        requiredDocs.push("DEATH_CERTIFICATE");
-      }
-    }
-
-    const missingDocs = requiredDocs.filter(
-      (doc) => !uploadedDocs.includes(doc)
-    );
+    const missingDocs = requiredDocs.filter((doc) => !uploadedDocs.includes(doc));
 
     if (missingDocs.length) {
       missingDocs.forEach((doc) => {

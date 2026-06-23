@@ -11,15 +11,16 @@ import React from "react";
 import { useLoading } from "../context/LoadingContext";
 import { useToast } from "../hooks/useToast";
 import { useNavigate } from "react-router-dom";
-import { parseDjangoError } from "../helpers/parseErros";
+import { parseDjangoError } from "../helpers/parseErrors";
+import { ApiBaseUrl } from "../settings";
 
 export default function SolicitarCopiaPage() {
-  const { showLoading, hideLoading } = useLoading();
+ const { showLoading, hideLoading } = useLoading();
   const navigate = useNavigate()
   const toaster = useToast();
 
   const { post, loading } = usePost({
-      url: "/document/create/",
+      url: `${ApiBaseUrl}/document/create/`,
       onSuccess: (res) => {
         toaster.success({
           title: "Documento enviado com sucesso!",
@@ -44,7 +45,7 @@ export default function SolicitarCopiaPage() {
 
    return (
      <Box py={10}>
-        <DocumentFormProvider submitFom={(data)=>post(MakeFormData(data))}>
+        <DocumentFormProvider submitForm={(data)=>post(MakeFormData(data))}>
             <StepForm/>
         </DocumentFormProvider>
     </Box>
