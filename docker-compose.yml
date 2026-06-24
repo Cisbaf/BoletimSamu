@@ -15,7 +15,7 @@ services:
     image: nginx:alpine
     container_name: nginx
     ports:
-      - "8020:80"
+      - "${BOLETIM_PORT}:80"
     volumes:
       - static_volume:/app/src/staticfiles
       - media_volume:/app/src/media

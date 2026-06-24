@@ -1,6 +1,6 @@
 
 
-const buildForDjango = false;
+const buildForDjango = true;
 
 const urlForViteDev = "http://localhost:8000"
 const urlForIncludeInDjango = ""
