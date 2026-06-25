@@ -74,7 +74,8 @@ export default function IncidentForm() {
   const { form } = useDocumentFormContext();
   const { formState: { errors }, register, control, watch } = form;
 
-  const location     = watch("incident.attendance_location");
+  const location      = watch("incident.attendance_location");
+  const purpose       = watch("purpose");
   const applicantType = watch("applicant.applicant_type");
 
   const isPurposeDisabled = (p: string) =>
@@ -206,6 +207,18 @@ export default function IncidentForm() {
               </Flex>
             )}
           />
+          {/* Campo extra quando "Outros" */}
+          {purpose === "OUTROS" && (
+            <Box mt={3}>
+              <Field.Root invalid={!!errors.other_purpose}>
+                <Input
+                  placeholder="Descreva a finalidade..."
+                  {...register("other_purpose")}
+                />
+                <Field.ErrorText>{errors.other_purpose?.message}</Field.ErrorText>
+              </Field.Root>
+            </Box>
+          )}
           <Field.ErrorText>{errors.purpose?.message}</Field.ErrorText>
         </Field.Root>
 

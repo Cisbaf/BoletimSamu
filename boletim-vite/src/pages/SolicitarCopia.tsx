@@ -73,7 +73,7 @@ function StepForm() {
             description: "Informe os dados sobre o atendimento do SAMU.",
             stepLabel: "Ocorrência",
             component: <IncidentForm/>,
-            validate: () => form.trigger(["purpose", "incident"])
+            validate: () => form.trigger(["purpose", "other_purpose", "incident"])
           },
           {
             title: "Finalidade e Documentos",

@@ -182,10 +182,19 @@ export const DocumentsSchema = z
   
 export const DocumentSchema = z.object({
   purpose: z.enum(PURPOSES, "Selecione uma opção!"),
+  other_purpose: z.string().optional(),
   applicant: ApplicantSchema,
   incident: IncidentSchema,
   documents: DocumentsSchema.optional(),
 }).superRefine((data, ctx) => {
+    if (data.purpose === "OUTROS" && !data.other_purpose?.trim()) {
+      ctx.addIssue({
+        path: ["other_purpose"],
+        message: "Descreva a finalidade",
+        code: z.ZodIssueCode.custom,
+      });
+    }
+
     const { applicant_type, relationship_degree } = data.applicant;
     const uploadedDocs = Object.keys(data.documents ?? {});
 
