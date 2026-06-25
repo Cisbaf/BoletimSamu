@@ -25,49 +25,42 @@ def validar_rg(value: str):
     Valida RG brasileiro de forma estrutural.
 
     Regras adotadas:
-    - Aceita apenas números, ponto e hífen
-    - Remove pontuação antes de validar
-    - Deve ter entre 7 e 9 dígitos numéricos
+    - Remove pontos, hífens e barras antes de validar
+    - Deve ter entre 7 e 9 caracteres após limpeza
+    - Pode conter apenas dígitos, ou dígitos + 'X' como último caractere (padrão SP)
     """
 
     if not value:
         return
 
-    # remove pontos e hífen
-    rg = re.sub(r"[.\-]", "", value)
+    rg = re.sub(r"[.\-/]", "", value).upper()
 
-    if not rg.isdigit():
-        raise ValidationError("RG deve conter apenas números.")
-
-    if len(rg) < 7 or len(rg) > 9:
-        raise ValidationError("RG deve conter entre 7 e 9 dígitos.")
+    if not re.fullmatch(r"[0-9]{6,8}[0-9X]", rg):
+        raise ValidationError(
+            "RG inválido. Deve conter de 7 a 9 dígitos (o último pode ser 'X')."
+        )
 
 
 def validar_celular(value: str):
     """
-    Valida número de celular brasileiro.
+    Valida número de telefone brasileiro (celular ou fixo).
 
     Regras adotadas:
-    - Aceita máscara: (11) 99999-9999 ou 11999999999
-    - Remove qualquer caractere não numérico
-    - Deve conter 11 dígitos (DDD + número)
-    - O número deve começar com 9 (padrão celular)
+    - Remove qualquer caractere não numérico antes de validar
+    - Celular: DDD (2 dígitos) + 9 + 8 dígitos = 11 dígitos
+    - Fixo:    DDD (2 dígitos) + 8 dígitos       = 10 dígitos
     """
 
     if not value:
         return
 
-    # Remove tudo que não for número
-    celular = re.sub(r"[^0-9]", "", value)
+    telefone = re.sub(r"[^0-9]", "", value)
 
-    if len(celular) != 11:
-        raise ValidationError("Celular deve conter DDD + número (11 dígitos).")
+    if len(telefone) not in (10, 11):
+        raise ValidationError("Telefone inválido. Use DDD + número (10 ou 11 dígitos).")
 
-    ddd = celular[:2]
-    numero = celular[2:]
-
-    if not ddd.isdigit() or int(ddd) < 11:
+    if int(telefone[:2]) < 11:
         raise ValidationError("DDD inválido.")
 
-    if numero[0] != "9":
+    if len(telefone) == 11 and telefone[2] != "9":
         raise ValidationError("Celular deve começar com 9 após o DDD.")

@@ -85,8 +85,9 @@ class Applicant(models.Model):
         validators=[validar_email]
     )
 
-    address = models.TextField(
+    address = models.CharField(
         _("Endereço"),
+        max_length=500,
         db_column="endereco",
         help_text=_("Endereço completo do solicitante.")
     )
@@ -132,7 +133,7 @@ class Applicant(models.Model):
             self.cpf = re.sub(r"\D", "", self.cpf)
         
         if self.rg:
-            self.rg = re.sub(r"\D", "", self.rg)
+            self.rg = re.sub(r"[.\-/]", "", self.rg).upper()
         
         if self.phone:
             self.phone = re.sub(r"\D", "", self.phone)

@@ -6,6 +6,11 @@ from rest_framework.viewsets import ReadOnlyModelViewSet
 from rest_framework.filters import SearchFilter, OrderingFilter
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.throttling import AnonRateThrottle
+
+
+class DocumentCreateThrottle(AnonRateThrottle):
+    scope = "document_create"
 from .models import DocumentRequest, DocumentStatus
 from applicant_document.models import ApplicantDocument
 from .serializers import DocumentRequestSerializer, DocumentRequestDetailSerializer, DocumentSimpleDetailSerializer, DocumentStatusDetailSerializer
@@ -74,6 +79,7 @@ class DocumentRequestCreateAPIView(APIView):
 
     permission_classes = [AllowAny]
     parser_classes = (MultiPartParser, FormParser)
+    throttle_classes = [DocumentCreateThrottle]
 
     def post(self, request):
         data = request.data.copy()  # QueryDict é imutável; copy() retorna versão mutável

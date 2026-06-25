@@ -1,3 +1,4 @@
+import os
 from django.test import TestCase, override_settings
 from django.core.files.uploadedfile import SimpleUploadedFile
 import tempfile
@@ -14,6 +15,14 @@ _PURPOSE = DocumentRequest.Purpose.DPVAT
 
 TEMP_MEDIA_ROOT = tempfile.mkdtemp()
 
+# Bytes mágicos mínimos válidos para cada extensão suportada
+_MAGIC = {
+    ".jpg":  b"\xff\xd8\xff\xe0" + b"\x00" * 16,
+    ".jpeg": b"\xff\xd8\xff\xe0" + b"\x00" * 16,
+    ".png":  b"\x89PNG\r\n\x1a\n" + b"\x00" * 12,
+    ".pdf":  b"%PDF-1.4\n"        + b"\x00" * 11,
+}
+
 
 def tearDownModule():
     shutil.rmtree(TEMP_MEDIA_ROOT, ignore_errors=True)
@@ -23,11 +32,9 @@ def tearDownModule():
 class ApplicantDocumentRequestSerializerTest(TestCase):
 
     def get_test_file(self, name="doc.jpg"):
-        return SimpleUploadedFile(
-            name=name,
-            content=b"fake_image_content",
-            content_type="image/jpeg"
-        )
+        ext = os.path.splitext(name)[1].lower()
+        content = _MAGIC.get(ext, _MAGIC[".jpg"])
+        return SimpleUploadedFile(name=name, content=content, content_type="image/jpeg")
 
     # =========================
     # ✅ CENÁRIOS VÁLIDOS
@@ -324,3 +331,47 @@ class ApplicantDocumentRequestSerializerTest(TestCase):
 
         self.assertFalse(serializer.is_valid())
         self.assertIn("não permitido", str(serializer.errors))
+
+    # =========================
+    # 🔒 VALIDAÇÃO DE UPLOAD
+    # =========================
+
+    def test_invalid_extension(self):
+        """Extensão fora da allowlist deve ser rejeitada."""
+        data = {
+            "files": [SimpleUploadedFile("doc.exe", b"MZ\x00\x00", content_type="application/octet-stream")],
+            "types": [DocumentType.PATIENT_ID],
+        }
+        serializer = ApplicantDocumentRequestSerializer(
+            data=data,
+            context={"applicant_type": Applicant.ApplicantType.PATIENT, "purpose": _PURPOSE}
+        )
+        self.assertFalse(serializer.is_valid())
+        self.assertIn("não permitido", str(serializer.errors))
+
+    def test_file_too_large(self):
+        """Arquivo acima de 10 MB deve ser rejeitado."""
+        large_content = _MAGIC[".jpg"] + b"\x00" * (10 * 1024 * 1024)
+        data = {
+            "files": [SimpleUploadedFile("doc.jpg", large_content, content_type="image/jpeg")],
+            "types": [DocumentType.PATIENT_ID],
+        }
+        serializer = ApplicantDocumentRequestSerializer(
+            data=data,
+            context={"applicant_type": Applicant.ApplicantType.PATIENT, "purpose": _PURPOSE}
+        )
+        self.assertFalse(serializer.is_valid())
+        self.assertIn("tamanho máximo", str(serializer.errors))
+
+    def test_wrong_magic_bytes(self):
+        """Extensão .jpg com conteúdo de executável deve ser rejeitada."""
+        data = {
+            "files": [SimpleUploadedFile("malware.jpg", b"MZ\x00\x00fake", content_type="image/jpeg")],
+            "types": [DocumentType.PATIENT_ID],
+        }
+        serializer = ApplicantDocumentRequestSerializer(
+            data=data,
+            context={"applicant_type": Applicant.ApplicantType.PATIENT, "purpose": _PURPOSE}
+        )
+        self.assertFalse(serializer.is_valid())
+        self.assertIn("não corresponde", str(serializer.errors))

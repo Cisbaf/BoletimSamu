@@ -1,9 +1,39 @@
+import os
+
 from rest_framework import serializers
+from rest_framework.exceptions import ValidationError
+
 from .models import ApplicantDocument
 from applicant.serializers import Applicant
 from applicant_document.models import ApplicantDocument, DocumentType
-from rest_framework.exceptions import ValidationError
 from utils.document_validate import get_required_docs
+
+_MAX_FILE_SIZE = 10 * 1024 * 1024  # 10 MB
+_ALLOWED_EXTENSIONS = {".pdf", ".jpg", ".jpeg", ".png"}
+_MAGIC_BYTES = {
+    ".pdf":  b"%PDF",
+    ".jpg":  b"\xff\xd8\xff",
+    ".jpeg": b"\xff\xd8\xff",
+    ".png":  b"\x89PNG",
+}
+
+
+def _validate_upload(f):
+    ext = os.path.splitext(f.name)[1].lower()
+    if ext not in _ALLOWED_EXTENSIONS:
+        raise ValidationError(
+            f"Tipo de arquivo não permitido: '{f.name}'. Envie PDF, JPG ou PNG."
+        )
+    if f.size > _MAX_FILE_SIZE:
+        raise ValidationError(
+            f"Arquivo '{f.name}' excede o tamanho máximo de 10 MB."
+        )
+    header = f.read(8)
+    f.seek(0)
+    if not header.startswith(_MAGIC_BYTES[ext]):
+        raise ValidationError(
+            f"O conteúdo de '{f.name}' não corresponde ao tipo declarado ({ext})."
+        )
 
 
 class ApplicantDocumentDetailSerializer(serializers.ModelSerializer):
@@ -30,6 +60,9 @@ class ApplicantDocumentRequestSerializer(serializers.Serializer):
     def validate(self, attrs):
         files = attrs.get("files", [])
         types = attrs.get("types", [])
+
+        for f in files:
+            _validate_upload(f)
 
         # 👇 agora vem do context
         applicant_type = self.context.get("applicant_type")
