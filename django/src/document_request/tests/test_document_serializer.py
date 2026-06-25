@@ -31,12 +31,10 @@ class DocumentRequestSerializerTest(TestCase):
     estão sendo corretamente aplicadas antes da criação dos registros.
     """
 
+    _JPEG_HEADER = b"\xff\xd8\xff\xe0" + b"\x00" * 16
+
     def get_test_file(self, name="doc.jpg"):
-        return SimpleUploadedFile(
-            name=name,
-            content=b"fake_image_content",
-            content_type="image/jpeg"
-        )
+        return SimpleUploadedFile(name=name, content=self._JPEG_HEADER, content_type="image/jpeg")
 
     # -------------------------------------------------
     # 🔧 DADOS BASE VÁLIDOS (PACIENTE)

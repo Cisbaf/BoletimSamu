@@ -17,6 +17,7 @@ import shutil
 
 from django.urls import reverse
 from django.test import override_settings
+from django.core.cache import cache
 from django.core.files.uploadedfile import SimpleUploadedFile
 from rest_framework.test import APITestCase
 
@@ -29,8 +30,11 @@ def tearDownModule():
     shutil.rmtree(TEMP_MEDIA_ROOT, ignore_errors=True)
 
 
+_JPEG_HEADER = b"\xff\xd8\xff\xe0" + b"\x00" * 16
+
+
 def get_test_file():
-    return SimpleUploadedFile("doc.jpg", b"img", content_type="image/jpeg")
+    return SimpleUploadedFile("doc.jpg", _JPEG_HEADER, content_type="image/jpeg")
 
 
 def base_payload(**overrides):
@@ -69,6 +73,7 @@ def base_payload(**overrides):
 class OtherPurposeValidationAPITest(APITestCase):
 
     def setUp(self):
+        cache.clear()
         self.url = reverse("document-request-create")
 
     # ------------------------------------------------------------------

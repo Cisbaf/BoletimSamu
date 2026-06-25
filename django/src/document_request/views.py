@@ -82,8 +82,7 @@ class DocumentRequestCreateAPIView(APIView):
     throttle_classes = [DocumentCreateThrottle]
 
     def post(self, request):
-        data = request.data.copy()  # QueryDict é imutável; copy() retorna versão mutável
-        processed_data = convert_document_multipart_to_json(data, request.FILES)
+        processed_data = convert_document_multipart_to_json(request.data, request.FILES)
         serializer = DocumentRequestSerializer(data=processed_data)
         serializer.is_valid(raise_exception=True)
         document = serializer.save()

@@ -5,6 +5,7 @@ from django.urls import reverse
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.utils import timezone
 from django.test import override_settings
+from django.core.cache import cache
 from rest_framework.test import APITestCase
 from ..models import DocumentRequest
 from incident.models import Incident
@@ -13,6 +14,8 @@ from applicant_document.models import ApplicantDocument
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth.models import User
 from random import random
+
+_JPEG_HEADER = b"\xff\xd8\xff\xe0" + b"\x00" * 16
 
 TEMP_MEDIA_ROOT = tempfile.mkdtemp()
 
@@ -48,6 +51,7 @@ class DocumentRequestDetailAPITest(APITestCase):
         )
 
     def setUp(self):
+        cache.clear()
         self.create_request(cpf="071.933.690-24", name="João da Silva", purpose="DPVAT")
         self.create_request(cpf="625.282.560-35", name="Maria Oliveira", purpose="SEGURO")
         self.create_request(cpf="842.410.380-77", name="Carlos Souza", purpose="DPVAT")
@@ -123,6 +127,7 @@ class DocumentRequestCreateAPITest(APITestCase):
     """
 
     def setUp(self):
+        cache.clear()
         self.url = reverse("document-request-create")
         self.data = get_valid_payload()
         return super().setUp()
@@ -172,7 +177,7 @@ class DocumentRequestCreateAPITest(APITestCase):
 
 
 def get_test_file(name="doc.jpg"):
-    return SimpleUploadedFile(name, b"img", content_type="image/jpeg")
+    return SimpleUploadedFile(name, _JPEG_HEADER, content_type="image/jpeg")
 
 
 def get_valid_payload():

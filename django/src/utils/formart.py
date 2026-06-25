@@ -59,41 +59,35 @@ def convert_document_multipart_to_json(data, files):
             request.FILES
         )
     """
-    # Processar os campos que estão em formato JSON string
-    if 'applicant' in data:
-        try:
-            data['applicant'] = json.loads(data['applicant'])
-        except (json.JSONDecodeError, TypeError):
-            # Se não for JSON válido, mantém como está
-            pass
-    
-    if 'incident' in data:
-        try:
-            data['incident'] = json.loads(data['incident'])
-        except (json.JSONDecodeError, TypeError):
-            pass
-    
-    # Document types pode vir como lista de strings
-    if 'document_types' in data:
-        document_types = data.getlist('document_types')
-        data['document_types'] = document_types
-    
-    # Processar arquivos
+    applicant = data.get('applicant', {})
+    try:
+        applicant = json.loads(applicant)
+    except (json.JSONDecodeError, TypeError):
+        pass
+
+    incident = data.get('incident', {})
+    try:
+        incident = json.loads(incident)
+    except (json.JSONDecodeError, TypeError):
+        pass
+
+    document_types = (
+        data.getlist('document_types')
+        if hasattr(data, 'getlist')
+        else data.get('document_types', [])
+    )
+
     if 'documents' in files:
-        data['documents'] = files.getlist('documents')
-    elif 'documents' in data:
-        # Se estiver em data (pode ser InMemoryUploadedFile)
-        if hasattr(data['documents'], 'file'):
-            data['documents'] = [data['documents']]
-    
-    # Resultado final
-    processed_data = {
+        documents = files.getlist('documents')
+    else:
+        raw = data.get('documents')
+        documents = [raw] if raw and hasattr(raw, 'file') else []
+
+    return {
         'purpose': data.get('purpose'),
         'other_purpose': data.get('other_purpose', ''),
-        'applicant': data.get('applicant', {}),
-        'incident': data.get('incident', {}),
-        'document_types': data.get('document_types', []),
-        'documents': data.get('documents', [])
+        'applicant': applicant,
+        'incident': incident,
+        'document_types': document_types,
+        'documents': documents,
     }
-
-    return processed_data
