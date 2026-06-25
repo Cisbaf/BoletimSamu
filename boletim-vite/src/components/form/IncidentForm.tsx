@@ -232,7 +232,7 @@ export default function IncidentForm() {
             Nº da ocorrência
             <Text as="span" fontWeight="400" color="#9CA3AF" ml={1}>(opcional)</Text>
           </Field.Label>
-          <Input placeholder="Ex: 2024-001" {...register("incident.occurrence_number")} />
+          <Input placeholder="Ex: 0000000/0" {...register("incident.occurrence_number")} />
           <Field.ErrorText>{errors.incident?.occurrence_number?.message}</Field.ErrorText>
         </Field.Root>
 
