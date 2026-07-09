@@ -22,23 +22,36 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.getenv("DJANGO_SECRET_KEY")
+# Em produção, DJANGO_SECRET_KEY é obrigatória via .env. O fallback abaixo só
+# existe para não travar em desenvolvimento local sem .env.dev configurado.
+SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "django-insecure-dev-only-change-me")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+# Ambiente é escolhido em runtime (via .env / .env.dev), não por branch.
+DEBUG = os.getenv("DJANGO_DEBUG", "False") == "True"
 
 ALLOWED_HOSTS = [
-    "localhost",
-    "192.168.1.10",
-    "atendimentocrur.cisbaf.org.br",
-    "www.atendimentocrur.cisbaf.org.br"
+    host.strip()
+    for host in os.getenv(
+        "DJANGO_ALLOWED_HOSTS",
+        "localhost,192.168.1.10,atendimentocrur.cisbaf.org.br,www.atendimentocrur.cisbaf.org.br",
+    ).split(",")
+    if host.strip()
 ]
 
-CORS_ALLOWED_ORIGINS = []
+CORS_ALLOWED_ORIGINS = [
+    origin.strip()
+    for origin in os.getenv("DJANGO_CORS_ALLOWED_ORIGINS", "").split(",")
+    if origin.strip()
+]
 
 CSRF_TRUSTED_ORIGINS = [
-    "http://192.168.1.10",
-    "https://atendimentocrur.cisbaf.org.br",
+    origin.strip()
+    for origin in os.getenv(
+        "DJANGO_CSRF_TRUSTED_ORIGINS",
+        "http://192.168.1.10,https://atendimentocrur.cisbaf.org.br",
+    ).split(",")
+    if origin.strip()
 ]
 
 USE_X_FORWARDED_HOST = True

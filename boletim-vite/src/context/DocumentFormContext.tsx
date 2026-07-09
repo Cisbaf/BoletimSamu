@@ -4,7 +4,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { DocumentFormData } from "../domain/documentSchemaForm";
 import { DocumentSchema } from "../domain/documentSchemaForm";
-import { initialFilling } from "../utils/fakeFilling";
+import { generateFakeFilling } from "../utils/fakeFilling";
 
 interface DocumentFormType {
   form: UseFormReturn<DocumentFormData>;
@@ -21,7 +21,7 @@ interface DocumentFormProps {
 export function DocumentFormProvider({submitForm ,children, fakeData}: DocumentFormProps) {
     const form = useForm<DocumentFormData>({
         resolver: zodResolver(DocumentSchema),
-        defaultValues: fakeData? initialFilling : {} 
+        defaultValues: fakeData ? generateFakeFilling() : {}
     });
 
     const { handleSubmit } = form;

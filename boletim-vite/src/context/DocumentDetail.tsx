@@ -6,6 +6,7 @@ import { usePostAuth } from "../hooks/usePostAuth";
 import type useDocumentList from "../hooks/useDocumentList";
 import { useLoading } from "./LoadingContext";
 import { useToast } from "../hooks/useToast";
+import { ApiBaseUrl } from "../settings";
 
 interface DocumentDetailType {
     document: DocumentDetail | undefined;
@@ -32,13 +33,13 @@ export function DocumentDetailProvider({ children, useDocumentList, removedForNe
     const { success, error: err } = useToast();
 
     const { data, refetch } = useGetAuth({
-        url: `/document/admin/requests/${protocol}/`,
+        url: `${ApiBaseUrl}/document/admin/requests/${protocol}/`,
         autoFetch: !!protocol,
         transform: ToCamelCase,
     });
 
     const { post, loading } = usePostAuth({
-        url: "/document/status/",
+        url: `${ApiBaseUrl}/document/status/`,
         onError(error) {
             err({ title: "Erro ao conectar-se", description: error.message})
             hideLoading();
@@ -46,7 +47,7 @@ export function DocumentDetailProvider({ children, useDocumentList, removedForNe
     });
 
     const { post: postRectificationStatus, loading: rectificationLoading } = usePostAuth({
-        url: `/document/rectifications/status/`,
+        url: `${ApiBaseUrl}/document/rectifications/status/`,
         onError(error) {
             err({ title: "Erro ao conectar-se", description: error.message})
             hideLoading();

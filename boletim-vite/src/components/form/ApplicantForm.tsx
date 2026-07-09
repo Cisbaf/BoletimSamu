@@ -1,6 +1,8 @@
 import {
   Box,
+  Button,
   Field,
+  Flex,
   Stack,
   Input,
   Grid,
@@ -8,6 +10,7 @@ import {
 } from "@chakra-ui/react";
 import { useDocumentFormContext } from "../../context/DocumentFormContext";
 import { useWatch } from "react-hook-form";
+import { generateFakeFilling } from "../../utils/fakeFilling";
 
 // ─── Opções de tipo de solicitante ──────────────────────────────────────────
 
@@ -46,7 +49,7 @@ const APPLICANT_OPTIONS = [
 
 export default function ApplicantForm() {
   const { form } = useDocumentFormContext();
-  const { formState: { errors }, register, setValue } = form;
+  const { formState: { errors }, register, setValue, reset } = form;
 
   const applicantType = useWatch({ control: form.control, name: "applicant.applicant_type" });
   const relationship  = useWatch({ control: form.control, name: "applicant.relationship_degree" });
@@ -67,6 +70,22 @@ export default function ApplicantForm() {
 
   return (
     <Stack gap={6}>
+
+      {/* ── Preenchimento automático (apenas em desenvolvimento) ── */}
+      {import.meta.env.DEV && (
+        <Flex justify="flex-end">
+          <Button
+            type="button"
+            size="xs"
+            variant="outline"
+            colorPalette="purple"
+            borderStyle="dashed"
+            onClick={() => reset(generateFakeFilling())}
+          >
+            🧪 Preencher com dados de teste (dev)
+          </Button>
+        </Flex>
+      )}
 
       {/* ── Tipo de Solicitante ── */}
       <Field.Root invalid={!!errors.applicant?.applicant_type}>

@@ -16,6 +16,7 @@ import { useLoading } from "../context/LoadingContext";
 import { useToast } from "../hooks/useToast";
 import { ToCamelCase } from "../utils/camelCase";
 import type { DocumentSimpleDetail } from "../domain/documentSimpleDetail";
+import { ApiBaseUrl } from "../settings";
 
 const MotionBox = motion(Box);
 
@@ -54,7 +55,7 @@ export default function AcompanharSolicitacao() {
   const { error } = useToast();
 
   const { data, refetch, loading, error: err } = useGet({
-    url: "/document/requests/",
+    url: `${ApiBaseUrl}/document/requests/`,
     params: { protocol: queryProtocol },
     autoFetch: false,
     transform: ToCamelCase,

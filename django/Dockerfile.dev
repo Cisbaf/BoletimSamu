@@ -1,0 +1,23 @@
+# Imagem de DESENVOLVIMENTO do backend: runserver + hot reload via volume.
+# Não usar em produção (ver Dockerfile na raiz do projeto para isso).
+FROM python:3.12-slim
+
+# Mesmas dependências de build do Dockerfile de produção, já que os dois usam
+# o mesmo requirements.txt (evita divergência de dependências entre ambientes).
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends gcc libpq-dev pkg-config default-libmysqlclient-dev poppler-utils && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+
+WORKDIR /app
+
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# O código real entra via volume (docker-compose.dev.yml monta ./django/src em /app)
+EXPOSE 8000
+
+CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]

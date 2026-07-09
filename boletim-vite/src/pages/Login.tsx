@@ -16,6 +16,7 @@ import { useAuth } from "../context/AuthContext";
 import { useToast } from "../hooks/useToast";
 import { useLoading } from "../context/LoadingContext";
 import { useNavigate } from "react-router-dom";
+import { ApiBaseUrl } from "../settings";
 
 export default function Login() {
     const navigate = useNavigate();
@@ -42,7 +43,7 @@ export default function Login() {
       setLoading(true);
       showLoading();
 
-      const response = await fetch("/auth/login/", {
+      const response = await fetch(`${ApiBaseUrl}/auth/login/`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
