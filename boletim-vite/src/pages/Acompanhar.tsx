@@ -184,11 +184,11 @@ export default function AcompanharSolicitacao() {
                   </svg>
                 </Box>
                 <Text fontSize="17px" fontWeight="800" color="#111827" letterSpacing="-0.3px">
-                  Acompanhar Solicitação
+                  Acompanhar / Retificar
                 </Text>
               </Flex>
               <Text fontSize="13px" color="#6B7280" pl="44px">
-                Consulte o status e os detalhes da sua solicitação.
+                Consulte o status da sua solicitação e, se necessário, solicite a retificação de um pedido já confirmado.
               </Text>
             </Box>
 
@@ -290,7 +290,7 @@ export default function AcompanharSolicitacao() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
             >
-              <DocumentStatusDetail data={request} />
+              <DocumentStatusDetail data={request} onRectificationCreated={refetch} />
             </MotionBox>
           )}
 

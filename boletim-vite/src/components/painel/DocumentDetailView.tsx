@@ -5,6 +5,7 @@ import BadgeStatusDetail from "./BadgeStatusDetail";
 import BadgeDaysAwaiting from "./BadgeDaysAwaiting";
 import { daysWaiting } from "../../utils/dates";
 import { APPLICANT_TYPE_LABELS, RELATIONSHIP_DEGREE_LABELS } from "../../domain/documentSchemaForm";
+import { getOpenRectification, STATUS_LABEL } from "../../utils/timeline";
 
 interface Props {
   data: DocumentDetail;
@@ -60,6 +61,7 @@ function Section({ children }: { children: ReactNode }) {
 
 export default function DocumentDetailView({ data }: Props) {
   const latestStatus = data.status?.[data.status.length - 1];
+  const openRectification = getOpenRectification(data.rectifications);
 
   const applicantLabel = [
     APPLICANT_TYPE_LABELS[data.applicant.applicantType],
@@ -97,6 +99,27 @@ export default function DocumentDetailView({ data }: Props) {
             <BadgeStatusDetail props={latestStatus} />
             {latestStatus.status === "aguardando" && (
               <BadgeDaysAwaiting days={daysWaiting(data.createdAt)} />
+            )}
+            {openRectification && (
+              <span style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "6px",
+                padding: "3px 10px",
+                background: "#F3E8FF",
+                color: "#6B21A8",
+                border: "1px solid #E9D5FF",
+                borderRadius: "9999px",
+                fontSize: "11px",
+                fontWeight: "700",
+                whiteSpace: "nowrap",
+              }}>
+                <span style={{
+                  width: "6px", height: "6px", borderRadius: "50%",
+                  background: "#A855F7", flexShrink: 0, display: "inline-block",
+                }} />
+                {STATUS_LABEL[openRectification.status[openRectification.status.length - 1].status]}
+              </span>
             )}
             <Text fontSize="11px" color="#6B7280" mt={1}>
               {new Date(data.createdAt).toLocaleString("pt-BR")}

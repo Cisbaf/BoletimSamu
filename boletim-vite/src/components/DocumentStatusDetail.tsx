@@ -1,9 +1,14 @@
+import React from "react";
 import type { DocumentSimpleDetail } from "../domain/documentSimpleDetail";
 import { Box, Flex, Text } from "@chakra-ui/react";
 import DocumentStatusTimeLine, { statusLabel } from "./DocumentStatusTimeLine";
+import RectificationModal from "./RectificationModal";
+import { hasOpenRectification } from "../utils/timeline";
 
 interface DocumentDetailProps {
   data: DocumentSimpleDetail;
+  /** Chamado após a retificação ser aberta com sucesso (ex.: refetch). */
+  onRectificationCreated?: () => void;
 }
 
 // ─── Config de status ─────────────────────────────────────────────────────────
@@ -16,9 +21,13 @@ const STATUS_BADGE: Record<string, { bg: string; color: string; border: string }
 
 // ─── DocumentStatusDetail ─────────────────────────────────────────────────────
 
-export default function DocumentStatusDetail({ data }: DocumentDetailProps) {
+export default function DocumentStatusDetail({ data, onRectificationCreated }: DocumentDetailProps) {
+  const [rectificationOpen, setRectificationOpen] = React.useState(false);
   const finalStatus = data.status[data.status.length - 1];
   const badge = STATUS_BADGE[finalStatus.status] ?? { bg: "#F3F4F6", color: "#6B7280", border: "#E5E7EB" };
+
+  const canRequestRectification =
+    finalStatus.status === "confirmado" && !hasOpenRectification(data.rectifications);
 
   return (
     <Box
@@ -99,12 +108,55 @@ export default function DocumentStatusDetail({ data }: DocumentDetailProps) {
             </Text>
           </Box>
         </Flex>
+        {/* ── Ação de retificação ─────────────────────────────────── */}
+        {canRequestRectification && (
+          <Box
+            role="button"
+            tabIndex={0}
+            onClick={() => setRectificationOpen(true)}
+            onKeyDown={(e) => { if (e.key === "Enter") setRectificationOpen(true); }}
+            mt={4}
+            display="inline-flex"
+            alignItems="center"
+            gap={2}
+            px={4}
+            py="9px"
+            bg="#F3E8FF"
+            color="#7C3AED"
+            border="1px solid #E9D5FF"
+            borderRadius="10px"
+            fontSize="13px"
+            fontWeight="700"
+            cursor="pointer"
+            transition="all 0.15s"
+            _hover={{ bg: "#E9D5FF" }}
+          >
+            <svg width="14" height="14" fill="none" viewBox="0 0 24 24">
+              <path
+                d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5Z"
+                stroke="#7C3AED" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+              />
+            </svg>
+            Solicitar Retificação
+          </Box>
+        )}
       </Box>
 
       {/* ── Timeline ───────────────────────────────────────────────── */}
       <Box px={6} py={6}>
-        <DocumentStatusTimeLine status={data.status} showAllMessage />
+        <DocumentStatusTimeLine
+          status={data.status}
+          rectifications={data.rectifications}
+          showAllMessage
+        />
       </Box>
+
+      <RectificationModal
+        protocol={data.protocol}
+        open={rectificationOpen}
+        onOpenChange={setRectificationOpen}
+        onSuccess={onRectificationCreated}
+      />
     </Box>
   );
 }

@@ -1,6 +1,12 @@
 # serializers.py
+import re
 from rest_framework import serializers
-from .models import DocumentRequest, DocumentStatus
+from .models import (
+    DocumentRequest,
+    DocumentStatus,
+    DocumentRectification,
+    DocumentRectificationStatus,
+)
 from applicant.serializers import ApplicantSerializer, Applicant
 from incident.serializers import IncidentSerializer, Incident
 from applicant_document.models import DocumentType, ApplicantDocument
@@ -21,25 +27,108 @@ class DocumentStatusSerializer(serializers.ModelSerializer):
         model = DocumentStatus
         fields = "__all__"
 
+class DocumentRectificationStatusDetailSerializer(serializers.ModelSerializer):
+    user_name = serializers.CharField(source="user.username", default=None)
+
+    class Meta:
+        model = DocumentRectificationStatus
+        fields = ["id", "rectification", "comment", "status", "user_name", "created_at"]
+
+
+class DocumentRectificationDetailSerializer(serializers.ModelSerializer):
+    """
+    Representação de uma retificação para exibição na linha do tempo do
+    pedido (pública e administrativa). O CPF usado para confirmar a
+    identidade não é exposto na resposta.
+    """
+    status = DocumentRectificationStatusDetailSerializer(
+        many=True,
+        read_only=True
+    )
+
+    class Meta:
+        model = DocumentRectification
+        fields = ["id", "document", "status", "created_at"]
+
+
+class DocumentRectificationCreateSerializer(serializers.Serializer):
+    """
+    Valida e abre um protocolo de retificação para um pedido já confirmado.
+
+    A view resolve o DocumentRequest a partir do protocolo (retornando 404
+    se não encontrado) e injeta o documento no contexto. Este serializer
+    cuida apenas das regras de negócio da abertura da retificação:
+    - o pedido precisa estar confirmado
+    - o CPF informado precisa conferir com o do solicitante cadastrado
+    - não pode haver outra retificação em andamento para o mesmo pedido
+    """
+    cpf = serializers.CharField(write_only=True)
+
+    def validate_cpf(self, value):
+        digits = re.sub(r"\D", "", value or "")
+        if len(digits) != 11:
+            raise serializers.ValidationError("CPF inválido.")
+        return digits
+
+    def validate(self, data):
+        document = self.context["document"]
+
+        last_status = document.status.order_by("-created_at").first()
+        if last_status is None or last_status.status != DocumentStatus.StatusChoices.CONFIRMADO:
+            raise serializers.ValidationError({
+                "detail": "Somente pedidos confirmados podem ser retificados."
+            })
+
+        applicant = getattr(document, "applicant", None)
+        applicant_cpf = re.sub(r"\D", "", applicant.cpf) if applicant and applicant.cpf else ""
+
+        if not applicant_cpf or data["cpf"] != applicant_cpf:
+            raise serializers.ValidationError({
+                "cpf": "O CPF informado não confere com o solicitante desta solicitação."
+            })
+
+        if document.has_open_rectification():
+            raise serializers.ValidationError({
+                "detail": "Já existe uma retificação em andamento para este pedido."
+            })
+
+        return data
+
+    def create(self, validated_data):
+        document = self.context["document"]
+        return DocumentRectification.objects.create(
+            document=document,
+            requested_cpf=validated_data["cpf"],
+        )
+
+
 class DocumentSimpleDetailSerializer(serializers.ModelSerializer):
     applicant_name = serializers.SerializerMethodField()
     status = DocumentStatusDetailSerializer(
         many=True,
         read_only=True
     )
+    rectifications = DocumentRectificationDetailSerializer(
+        many=True,
+        read_only=True
+    )
 
     def get_applicant_name(self, obj):
         return obj.applicant.full_name
-    
+
     class Meta:
         model = DocumentRequest
-        fields = ["id", "protocol", "applicant_name", "status", "created_at"]
+        fields = ["id", "protocol", "applicant_name", "status", "rectifications", "created_at"]
 
 
 class DocumentRequestDetailSerializer(serializers.ModelSerializer):
     applicant = ApplicantSerializer(read_only=True)
     incident = IncidentSerializer(read_only=True)
     status = DocumentStatusDetailSerializer(
+        many=True,
+        read_only=True
+    )
+    rectifications = DocumentRectificationDetailSerializer(
         many=True,
         read_only=True
     )

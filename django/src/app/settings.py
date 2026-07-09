@@ -54,6 +54,7 @@ REST_FRAMEWORK = {
     "PAGE_SIZE": 5,
     "DEFAULT_THROTTLE_RATES": {
         "document_create": "10/hour",
+        "document_rectification_create": "10/hour",
     },
 }
 

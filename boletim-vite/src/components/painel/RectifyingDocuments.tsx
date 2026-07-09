@@ -7,10 +7,17 @@ import { PaginationForDocs } from "./Pagination";
 import DocumentTable from "./DocumentTable";
 import useDocumentList from "../../hooks/useDocumentList";
 import BadgeDaysAwaiting from "./BadgeDaysAwaiting";
+import BadgeRectificationStatus from "./BadgeRectificationStatus";
 import { daysWaiting } from "../../utils/dates";
 import { DocumentDetailProvider } from "../../context/DocumentDetail";
 import { DocumentShowDetail, type DocumentShowDetailType } from "./DocumentShowDetail";
-import { ApiBaseUrl } from "../../settings"
+import { getOpenRectification } from "../../utils/timeline";
+import { ApiBaseUrl } from "../../settings";
+
+interface RectifyingDocumentsProps {
+  /** Chamado após uma retificação (ou o pedido) mudar de status — usado para atualizar os contadores das abas. */
+  onChanged?: () => void;
+}
 
 // ─── Loading skeleton ─────────────────────────────────────────────────────────
 
@@ -37,14 +44,13 @@ function LoadingSkeleton() {
   )
 }
 
-interface PendingDocumentsProps {
-  /** Chamado após uma solicitação mudar de status — usado para atualizar os contadores das abas. */
-  onChanged?: () => void;
-}
+// ─── RectifyingDocuments ────────────────────────────────────────────────────────
+//
+// Aba "Retificações": lista pedidos com uma retificação em andamento
+// (solicitada ou agendada), reaproveitando `?status=retificando` no mesmo
+// endpoint de listagem usado pela aba "Aguardando".
 
-// ─── PendingDocuments ─────────────────────────────────────────────────────────
-
-export default function PendingDocuments({ onChanged }: PendingDocumentsProps) {
+export default function RectifyingDocuments({ onChanged }: RectifyingDocumentsProps) {
   const documentDetailRef = React.useRef<DocumentShowDetailType | null>(null);
   const { queryParams, setFiltersBatch, filters } = useFilters();
   const hookUseDocumentList = useDocumentList();
@@ -57,7 +63,7 @@ export default function PendingDocuments({ onChanged }: PendingDocumentsProps) {
   });
 
   React.useEffect(() => {
-    setFiltersBatch({ status: "aguardando", page: 1 });
+    setFiltersBatch({ status: "retificando", page: 1 });
   }, []);
 
   React.useEffect(() => {
@@ -77,12 +83,24 @@ export default function PendingDocuments({ onChanged }: PendingDocumentsProps) {
         <DocumentTable
           documents={documents}
           showDetail={documentDetailRef.current?.showDocument}
-          renderExtraCols={["Tempo de Espera"]}
-          renderRow={(item) => (
-            <Table.Cell px={4} py={4}>
-              <BadgeDaysAwaiting days={daysWaiting(item.createdAt)} />
-            </Table.Cell>
-          )}
+          renderExtraCols={["Retificação", "Aberta há"]}
+          renderRow={(item) => {
+            const openRectification = getOpenRectification(item.rectifications);
+            const lastStatus = openRectification?.status[openRectification.status.length - 1];
+
+            return (
+              <>
+                <Table.Cell px={4} py={4}>
+                  {lastStatus && <BadgeRectificationStatus props={lastStatus} />}
+                </Table.Cell>
+                <Table.Cell px={4} py={4}>
+                  {openRectification && (
+                    <BadgeDaysAwaiting days={daysWaiting(openRectification.createdAt)} />
+                  )}
+                </Table.Cell>
+              </>
+            );
+          }}
         />
       )}
 
@@ -90,7 +108,11 @@ export default function PendingDocuments({ onChanged }: PendingDocumentsProps) {
         <PaginationForDocs count={data?.count} pageSize={5} />
       </Box>
 
-      <DocumentDetailProvider useDocumentList={hookUseDocumentList} removedForNewStatus onChanged={onChanged}>
+      <DocumentDetailProvider
+        useDocumentList={hookUseDocumentList}
+        removedForNewStatus
+        onChanged={onChanged}
+      >
         <DocumentShowDetail ref={documentDetailRef} />
       </DocumentDetailProvider>
     </>

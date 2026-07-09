@@ -1,10 +1,12 @@
 import { Box, Text, Tabs } from "@chakra-ui/react"
 import { FilterProvider } from "../../context/FilterContext"
 import PendingDocuments from "./PendingDocuments"
-import { BsClockHistory } from "react-icons/bs"
+import RectifyingDocuments from "./RectifyingDocuments"
+import { BsClockHistory, BsPencilSquare } from "react-icons/bs"
 import { LuFileSearch } from "react-icons/lu"
 import SearchDocuments from "./SearchDocuments"
 import type { ReactNode } from "react"
+import useTabCounts from "../../hooks/useTabCounts"
 
 // ─── Styled Tab Trigger ──────────────────────────────────────────────────────
 
@@ -42,6 +44,8 @@ function TabTrigger({ value, icon, label }: TabTriggerProps) {
 // ─── TabsStatus ──────────────────────────────────────────────────────────────
 
 export default function TabsStatus() {
+  const counts = useTabCounts();
+
   return (
     <Box>
       {/* ── Page header ─────────────────────────────────────────────────── */}
@@ -66,7 +70,7 @@ export default function TabsStatus() {
         boxShadow="0 1px 3px rgba(0,0,0,0.05), 0 4px 24px rgba(0,0,0,0.07)"
         overflow="hidden"
       >
-        <Tabs.Root defaultValue="aguardando" lazyMount>
+        <Tabs.Root defaultValue="aguardando" lazyMount onValueChange={() => counts.refetch()}>
 
           {/* Tab nav */}
           <Box borderBottom="1px solid #F3F4F6" px={6}>
@@ -74,7 +78,12 @@ export default function TabsStatus() {
               <TabTrigger
                 value="aguardando"
                 icon={<BsClockHistory size={15} />}
-                label="Aguardando"
+                label={`Aguardando (${counts.aguardando})`}
+              />
+              <TabTrigger
+                value="retificacoes"
+                icon={<BsPencilSquare size={15} />}
+                label={`Retificações (${counts.retificando})`}
               />
               <TabTrigger
                 value="search"
@@ -88,7 +97,12 @@ export default function TabsStatus() {
           <Box p={6}>
             <Tabs.Content value="aguardando" pt={0}>
               <FilterProvider>
-                <PendingDocuments />
+                <PendingDocuments onChanged={counts.refetch} />
+              </FilterProvider>
+            </Tabs.Content>
+            <Tabs.Content value="retificacoes" pt={0}>
+              <FilterProvider>
+                <RectifyingDocuments onChanged={counts.refetch} />
               </FilterProvider>
             </Tabs.Content>
             <Tabs.Content value="search" pt={0}>

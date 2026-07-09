@@ -11,9 +11,21 @@ from rest_framework.throttling import AnonRateThrottle
 
 class DocumentCreateThrottle(AnonRateThrottle):
     scope = "document_create"
-from .models import DocumentRequest, DocumentStatus
+
+
+class DocumentRectificationCreateThrottle(AnonRateThrottle):
+    scope = "document_rectification_create"
+from .models import DocumentRequest, DocumentStatus, DocumentRectification, DocumentRectificationStatus
 from applicant_document.models import ApplicantDocument
-from .serializers import DocumentRequestSerializer, DocumentRequestDetailSerializer, DocumentSimpleDetailSerializer, DocumentStatusDetailSerializer
+from .serializers import (
+    DocumentRequestSerializer,
+    DocumentRequestDetailSerializer,
+    DocumentSimpleDetailSerializer,
+    DocumentStatusDetailSerializer,
+    DocumentRectificationDetailSerializer,
+    DocumentRectificationCreateSerializer,
+    DocumentRectificationStatusDetailSerializer,
+)
 from utils.formart import convert_document_multipart_to_json
 from django.db.models import OuterRef, Subquery
 #from .services import send_message_wpp_to_admin
@@ -119,6 +131,44 @@ class BaseDocumentRequestViewSet(ReadOnlyModelViewSet):
     ordering_fields = ["created_at", "id"]
     ordering = ["-created_at"]
 
+    def annotate_status(self, queryset):
+        """
+        Anota o status atual do pedido (`current_status`) e o status atual
+        de uma eventual retificação em aberto (`current_rectification_status`),
+        e aplica o filtro `?status=` da querystring.
+
+        O valor especial `retificando` filtra pedidos com uma retificação
+        em andamento (solicitada ou agendada) — permite à aba
+        "Retificações" do painel reaproveitar o mesmo parâmetro `status`
+        já usado para aguardando/confirmado/cancelado.
+        """
+        last_status = DocumentStatus.objects.filter(
+            document=OuterRef("pk")
+        ).order_by("-created_at")
+
+        last_rectification_status = DocumentRectificationStatus.objects.filter(
+            rectification__document=OuterRef("pk")
+        ).order_by("-created_at")
+
+        queryset = queryset.annotate(
+            current_status=Subquery(last_status.values("status")[:1]),
+            current_rectification_status=Subquery(last_rectification_status.values("status")[:1]),
+        )
+
+        status = self.request.query_params.get("status")
+
+        if status == "retificando":
+            queryset = queryset.filter(
+                current_rectification_status__in=[
+                    DocumentRectificationStatus.StatusChoices.SOLICITADA,
+                    DocumentRectificationStatus.StatusChoices.AGENDADA,
+                ]
+            )
+        elif status:
+            queryset = queryset.filter(current_status=status)
+
+        return queryset
+
 class DocumentPublicViewSet(BaseDocumentRequestViewSet):
     permission_classes = [AllowAny]
     serializer_class = DocumentSimpleDetailSerializer
@@ -127,36 +177,17 @@ class DocumentPublicViewSet(BaseDocumentRequestViewSet):
     ordering = ["created_at"]
 
     def get_queryset(self):
-        last_status = DocumentStatus.objects.filter(
-            document=OuterRef("pk")
-        ).order_by("-created_at")
+        base = DocumentRequest.objects.select_related("applicant")
+        return self.annotate_status(base)
 
-        base = (
-            DocumentRequest.objects
-            .annotate(current_status=Subquery(last_status.values("status")[:1]))
-            .select_related("applicant")
-        )
-
-        status = self.request.query_params.get("status")
-
-        if status:
-            base = base.filter(current_status=status)
-
-        return base
-    
 class DocumentDetailViewSet(BaseDocumentRequestViewSet):
     permission_classes = [IsAuthenticated]
     serializer_class = DocumentRequestDetailSerializer
     lookup_field = "protocol"
 
     def get_queryset(self):
-        last_status = DocumentStatus.objects.filter(
-            document=OuterRef("pk")
-        ).order_by("-created_at")
-
         base = (
             DocumentRequest.objects
-            .annotate(current_status=Subquery(last_status.values("status")[:1]))
             .select_related("applicant", "incident")
             .prefetch_related(
                 Prefetch(
@@ -165,12 +196,79 @@ class DocumentDetailViewSet(BaseDocumentRequestViewSet):
                 )
             )
         )
+        return self.annotate_status(base)
 
-        status = self.request.query_params.get("status")
 
-        if status:
-            base = base.filter(current_status=status)
-        
-        return base
+class DocumentRectificationCreateAPIView(APIView):
+    """
+    Endpoint público para abertura de um protocolo de retificação.
 
-    
+    Um pedido já confirmado pode ter uma retificação solicitada quando,
+    ao retirar o documento presencialmente, o solicitante identifica uma
+    informação incorreta. A identidade de quem solicita é confirmada
+    comparando o CPF informado com o CPF cadastrado no pedido.
+
+    O documento é resolvido pelo protocolo (identificador público). As
+    regras de negócio (pedido confirmado, CPF confere, sem retificação já
+    em andamento) são validadas pelo DocumentRectificationCreateSerializer.
+    """
+    permission_classes = [AllowAny]
+    throttle_classes = [DocumentRectificationCreateThrottle]
+
+    def post(self, request):
+        protocol = request.data.get("protocol")
+
+        try:
+            document = DocumentRequest.objects.select_related("applicant").get(protocol=protocol)
+        except (DocumentRequest.DoesNotExist, TypeError, ValueError):
+            return Response({"protocol": "Pedido não encontrado."}, status=404)
+
+        serializer = DocumentRectificationCreateSerializer(
+            data=request.data,
+            context={"document": document},
+        )
+        serializer.is_valid(raise_exception=True)
+        rectification = serializer.save()
+
+        response_serializer = DocumentRectificationDetailSerializer(rectification)
+        return Response(status=201, data=response_serializer.data)
+
+
+class DocumentRectificationStatusCreateAPIView(APIView):
+    """
+    Registra uma mudança de status em uma retificação (uso administrativo —
+    ex.: agendar, concluir ou cancelar o atendimento da retificação).
+
+    Segue o mesmo padrão de DocumentStatusCreateAPIView: busca o último
+    status da retificação e delega a transição a change_status(), que
+    valida e cria um novo evento imutável (append-only).
+    """
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        rectification_id = request.data.get("rectification")
+        new_status = request.data.get("status")
+        comment = request.data.get("comment", "")
+
+        try:
+            rectification = DocumentRectification.objects.get(pk=rectification_id)
+        except (DocumentRectification.DoesNotExist, TypeError, ValueError):
+            return Response({"rectification": "Retificação não encontrada."}, status=404)
+
+        last_status = rectification.status.order_by("-created_at").first()
+
+        if last_status is None:
+            return Response({"detail": "Retificação sem status inicial."}, status=400)
+
+        try:
+            new_event = last_status.change_status(
+                new_status=new_status,
+                user=request.user,
+                comment=comment,
+            )
+        except ValidationError as e:
+            message = e.message if hasattr(e, "message") else str(e)
+            return Response({"detail": message}, status=400)
+
+        serializer = DocumentRectificationStatusDetailSerializer(new_event)
+        return Response(data=serializer.data, status=201)

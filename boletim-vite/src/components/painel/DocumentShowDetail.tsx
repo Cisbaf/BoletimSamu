@@ -64,7 +64,7 @@ export const DocumentShowDetail = React.forwardRef<DocumentShowDetailType, Docum
                         <Text>Novo Status</Text>
                     </Button>
                     <DocumentDetailView data={doc} />
-                    <DocumentStatusTimeLine status={doc.status}/> 
+                    <DocumentStatusTimeLine status={doc.status} rectifications={doc.rectifications}/>
                     <DocumentResponse
                         isOpen={answersVisible}
                         onOpenChange={setAnswersVisible}

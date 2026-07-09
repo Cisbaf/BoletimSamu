@@ -24,6 +24,7 @@ const statusCollection = createListCollection({
     { label: "Aguardando", value: "aguardando" },
     { label: "Confirmado", value: "confirmado" },
     { label: "Cancelado", value: "cancelado" },
+    { label: "Retificações em aberto", value: "retificando" },
   ],
 });
 

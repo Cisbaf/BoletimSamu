@@ -8,5 +8,5 @@ interface Menu {
 export const MENU: Menu[] = [
     { label: "Inicio", path: "/" },
     { label: "Solicitar", path: "/solicitar" },
-    { label: "Acompanhar", path: "/acompanhar" }
+    { label: "Acompanhar / Retificar", path: "/acompanhar" }
 ]

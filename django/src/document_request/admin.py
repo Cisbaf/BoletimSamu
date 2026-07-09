@@ -1,6 +1,11 @@
 from django.contrib import admin
 from django.utils.translation import gettext_lazy as _
-from .models import DocumentRequest, DocumentStatus
+from .models import (
+    DocumentRequest,
+    DocumentStatus,
+    DocumentRectification,
+    DocumentRectificationStatus,
+)
 from applicant.models import Applicant
 from incident.models import Incident
 
@@ -33,3 +38,12 @@ class DocumentRequestAdmin(admin.ModelAdmin):
 @admin.register(DocumentStatus)
 class DocumentStatusAdmin(admin.ModelAdmin):
     pass
+
+@admin.register(DocumentRectification)
+class DocumentRectificationAdmin(admin.ModelAdmin):
+    list_display = ("id", "document", "created_at")
+    readonly_fields = ("created_at",)
+
+@admin.register(DocumentRectificationStatus)
+class DocumentRectificationStatusAdmin(admin.ModelAdmin):
+    list_display = ("id", "rectification", "status", "created_at")

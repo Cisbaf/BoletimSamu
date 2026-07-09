@@ -1,61 +1,31 @@
 import { Box, Flex, Text } from "@chakra-ui/react";
-import type { Status } from "../domain/documentDetail";
+import type { Rectification, Status } from "../domain/documentDetail";
 import { Tooltip } from "./ui/tooltip";
 import { truncateText } from "../utils/truncateText";
+import {
+  STATUS_COLOR,
+  STATUS_LABEL,
+  STATUS_STYLE,
+  mergeTimelineEvents,
+  type TimelineEvent,
+} from "../utils/timeline";
 
 interface TimeLineProps {
   status: Status[];
+  rectifications?: Rectification[];
   showAllMessage?: boolean;
 }
 
 // ─── Mapeamentos exportados (usados em DocumentStatusDetail) ──────────────────
+// Reexportados de utils/timeline.ts, que também cobre os status de
+// retificação — mantém uma única fonte de verdade para rótulos/cores.
 
-export const statusColor = {
-  aguardando: "yellow",
-  confirmado: "green",
-  cancelado:  "red",
-};
-
-export const statusLabel = {
-  aguardando: "Aguardando",
-  confirmado: "Confirmado",
-  cancelado:  "Cancelado",
-};
-
-// ─── Config de cores para timeline vertical ───────────────────────────────────
-
-const STATUS_STYLE: Record<string, {
-  dot: string; line: string; badge: string; badgeColor: string; badgeBorder: string; commentBorder: string
-}> = {
-  aguardando: {
-    dot:           "#F59E0B",
-    line:          "#FDE68A",
-    badge:         "#FEF9C3",
-    badgeColor:    "#854D0E",
-    badgeBorder:   "#FDE68A",
-    commentBorder: "#F59E0B",
-  },
-  confirmado: {
-    dot:           "#22C55E",
-    line:          "#BBF7D0",
-    badge:         "#DCFCE7",
-    badgeColor:    "#166534",
-    badgeBorder:   "#BBF7D0",
-    commentBorder: "#22C55E",
-  },
-  cancelado: {
-    dot:           "#EF4444",
-    line:          "#FECACA",
-    badge:         "#FEE2E2",
-    badgeColor:    "#991B1B",
-    badgeBorder:   "#FECACA",
-    commentBorder: "#EF4444",
-  },
-}
+export const statusColor = STATUS_COLOR;
+export const statusLabel = STATUS_LABEL;
 
 // ─── Vertical timeline (página do usuário) ────────────────────────────────────
 
-function VerticalTimeLine({ status }: { status: Status[] }) {
+function VerticalTimeLine({ events }: { events: TimelineEvent[] }) {
   return (
     <Box>
       <Text fontWeight="700" fontSize="13px" color="#374151" mb={5}>
@@ -63,12 +33,12 @@ function VerticalTimeLine({ status }: { status: Status[] }) {
       </Text>
 
       <Flex direction="column">
-        {status.map((item, index) => {
-          const isLast = index === status.length - 1;
+        {events.map((item, index) => {
+          const isLast = index === events.length - 1;
           const style = STATUS_STYLE[item.status] ?? STATUS_STYLE.aguardando;
 
           return (
-            <Flex key={item.id} gap={4}>
+            <Flex key={item.key} gap={4}>
               {/* Coluna esquerda: dot + linha vertical */}
               <Flex direction="column" align="center" flexShrink={0} pt="2px">
                 {/* Dot */}
@@ -115,7 +85,7 @@ function VerticalTimeLine({ status }: { status: Status[] }) {
                       width: "6px", height: "6px", borderRadius: "50%",
                       background: style.badgeColor, flexShrink: 0, display: "inline-block",
                     }} />
-                    {statusLabel[item.status] ?? item.status}
+                    {item.label}
                   </span>
 
                   <Text fontSize="12px" color="#9CA3AF" whiteSpace="nowrap">
@@ -155,8 +125,10 @@ function VerticalTimeLine({ status }: { status: Status[] }) {
 
 // ─── Horizontal timeline (painel admin) ──────────────────────────────────────
 
-function HorizontalTimeLine({ status }: { status: Status[] }) {
-  const finalStatus = status[status.length - 1];
+function HorizontalTimeLine({ events }: { events: TimelineEvent[] }) {
+  const finalEvent = events[events.length - 1];
+
+  if (!finalEvent) return null;
 
   return (
     <Box mb={8}>
@@ -182,18 +154,19 @@ function HorizontalTimeLine({ status }: { status: Status[] }) {
           top="10px"
           left="0"
           height="2px"
-          bg={`${statusColor[finalStatus.status]}.400`}
+          bg={`${statusColor[finalEvent.status] ?? "gray"}.400`}
           width="100%"
           zIndex={0}
         />
 
-        {status.map((item, index) => {
-          const isLast = index === status.length - 1;
-          const isCompleted = index <= status.length - 1;
+        {events.map((item, index) => {
+          const isLast = index === events.length - 1;
+          const isCompleted = index <= events.length - 1;
+          const color = statusColor[item.status] ?? "gray";
 
           return (
             <Flex
-              key={item.id}
+              key={item.key}
               direction="column"
               align="center"
               flex={1}
@@ -206,17 +179,17 @@ function HorizontalTimeLine({ status }: { status: Status[] }) {
                 borderRadius="full"
                 bg={
                   isLast
-                    ? `${statusColor[item.status]}.500`
+                    ? `${color}.500`
                     : isCompleted
-                    ? `${statusColor[item.status]}.300`
+                    ? `${color}.300`
                     : "gray.300"
                 }
                 border="3px solid white"
                 boxShadow="md"
               />
 
-              <Text mt={2} fontSize="sm" fontWeight="medium">
-                {statusLabel[item.status]}
+              <Text mt={2} fontSize="sm" fontWeight="medium" textAlign="center">
+                {item.label}
               </Text>
 
               <Text fontSize="xs" color="gray.500">
@@ -248,9 +221,11 @@ function HorizontalTimeLine({ status }: { status: Status[] }) {
 
 // ─── Componente principal ─────────────────────────────────────────────────────
 
-export default function DocumentStatusTimeLine({ status, showAllMessage }: TimeLineProps) {
+export default function DocumentStatusTimeLine({ status, rectifications, showAllMessage }: TimeLineProps) {
+  const events = mergeTimelineEvents(status, rectifications);
+
   if (showAllMessage) {
-    return <VerticalTimeLine status={status} />;
+    return <VerticalTimeLine events={events} />;
   }
-  return <HorizontalTimeLine status={status} />;
+  return <HorizontalTimeLine events={events} />;
 }

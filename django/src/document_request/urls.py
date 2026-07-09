@@ -6,7 +6,9 @@ from .views import (
     DocumentPublicViewSet,
     DocumentDetailViewSet,
     DocumentRequestCreateAPIView,
-    DocumentStatusCreateAPIView
+    DocumentStatusCreateAPIView,
+    DocumentRectificationCreateAPIView,
+    DocumentRectificationStatusCreateAPIView,
 )
 
 # 🔓 Router público
@@ -39,5 +41,17 @@ urlpatterns = [
     # 🔹 rotas privadas
     path('admin/', include(admin_router.urls)),
 
-    path('status/', DocumentStatusCreateAPIView.as_view(), name="status-create")
+    path('status/', DocumentStatusCreateAPIView.as_view(), name="status-create"),
+
+    # 🔹 retificação
+    path(
+        'rectifications/create/',
+        DocumentRectificationCreateAPIView.as_view(),
+        name="document-rectification-create"
+    ),
+    path(
+        'rectifications/status/',
+        DocumentRectificationStatusCreateAPIView.as_view(),
+        name="rectification-status-create"
+    ),
 ]

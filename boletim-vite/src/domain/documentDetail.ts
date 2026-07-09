@@ -9,6 +9,7 @@ export interface DocumentDetail {
   applicant: ApplicantResponse;
   incident: IncidentResponse;
   status: Status[];
+  rectifications: Rectification[];
   documents: DocumentFile[];
   protocol: string;
   purpose: string;
@@ -53,6 +54,31 @@ export interface Status {
   comment: string | null;
   status: "aguardando" | "confirmado" | "cancelado";
   userName?: string;
+  createdAt: string;
+}
+
+/* =========================
+ * RETIFICAÇÃO
+ * ========================= */
+
+export type RectificationStatusValue =
+  | "solicitada"
+  | "agendada"
+  | "concluida"
+  | "cancelada";
+
+export interface RectificationStatus {
+  id: number;
+  comment: string | null;
+  status: RectificationStatusValue;
+  userName?: string;
+  createdAt: string;
+}
+
+export interface Rectification {
+  id: number;
+  document: number;
+  status: RectificationStatus[];
   createdAt: string;
 }
 
