@@ -2,6 +2,7 @@ import {
   Flex,
   Text,
   Box,
+  Image,
   IconButton,
   VStack,
   Drawer,
@@ -16,6 +17,7 @@ import { FiMenu, FiUser } from "react-icons/fi";
 
 import { MENU } from "../helpers/menu";
 import { useAuth } from "../context/AuthContext";
+import logo from "../assets/cisbaf-samu.png";
 
 export default function AppBar() {
   const [open, setOpen] = useState(false);
@@ -23,6 +25,7 @@ export default function AppBar() {
 
   return (
     <>
+      <Box h="3px" w="100%" bgGradient="to-r" gradientFrom="samuRed.500" gradientTo="samuOrange.500" position="sticky" top="0" zIndex="1001" />
       <Flex
         as="header"
         w="100%"
@@ -35,30 +38,23 @@ export default function AppBar() {
         borderBottom="1px solid"
         borderColor="#E5E7EB"
         position="sticky"
-        top="0"
+        top="3px"
         zIndex="1000"
         boxShadow="0 1px 3px rgba(0,0,0,0.06)"
       >
         {/* LOGO */}
         <Link to="/">
           <Flex align="center" gap={2}>
-            <Box
-              w="28px"
-              h="28px"
-              bg="#DC2626"
-              borderRadius="6px"
-              display="flex"
-              alignItems="center"
-              justifyContent="center"
+            <Image
+              src={logo}
+              alt="SAMU 192"
+              w="32px"
+              h="32px"
               flexShrink={0}
-            >
-              <Text color="white" fontWeight="800" fontSize="13px" lineHeight={1}>
-                S
-              </Text>
-            </Box>
+            />
             <Box>
               <Text fontWeight="700" fontSize="14px" color="#111827" lineHeight={1.1}>
-                 Cópia de Boletim
+                SAMU 192 · Cópia de Boletim
               </Text>
               <Text fontSize="9px" color="#9CA3AF" letterSpacing="0.3px">
                 CISBAF · Sistema de Solicitações

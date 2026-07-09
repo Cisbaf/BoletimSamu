@@ -36,6 +36,17 @@ export const system = createSystem(defaultConfig, {
           500: { value: "#22C55E" },
           600: { value: "#16A34A" },
         },
+        samuRed: {
+          50:  { value: "#FDECEC" },
+          500: { value: "#D2232A" },
+          600: { value: "#B71C1F" },
+          700: { value: "#8F1519" },
+        },
+        samuOrange: {
+          50:  { value: "#FFF4E5" },
+          500: { value: "#F7941D" },
+          600: { value: "#E07C0A" },
+        },
       },
       fonts: {
         heading: { value: "'Plus Jakarta Sans', system-ui, sans-serif" },
