@@ -17,7 +17,6 @@ import ambulanceImage from "../assets/samu-ambulancia.jpg";
 const RouterLink = chakra(Link);
 
 const TRUST_ITEMS = [
-  { icon: MdOutlineAttachMoney, label: "100% Gratuito" },
   { icon: MdBolt, label: "Solicitação Online" },
   { icon: MdOutlineLock, label: "Dados Protegidos (LGPD)" },
   { icon: MdOutlineDescription, label: "Documento Oficial" },
@@ -86,7 +85,7 @@ export default function HomePage() {
           >
             <MdVerifiedUser color="#F7941D" size={16} />
             <Text fontSize="12.5px" fontWeight="600" color="white" letterSpacing="0.3px">
-              Serviço público e gratuito · SUS
+              Serviço público CISBAF
             </Text>
           </Flex>
 
