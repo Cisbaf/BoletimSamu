@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="samuLogoTitle samuLogoDesc">
+  <title id="samuLogoTitle">SAMU</title>
+  <desc id="samuLogoDesc">Escudo estilizado com linha de pulso cardíaco formando uma cruz, símbolo de atendimento médico de urgência.</desc>
+  <path fill="#F4901E" d="M256 70
+    C210 70 166 82 126 105
+    C110 114 100 132 100 151
+    L100 264
+    C100 366 164 438 256 472
+    C348 438 412 366 412 264
+    L412 151
+    C412 132 402 114 386 105
+    C346 82 302 70 256 70
+    Z"/>
+  <path fill="#D71F26" d="M256 96
+    C216 96 178 107 142 127
+    C129 134 121 148 121 163
+    L121 264
+    C121 354 178 418 256 448
+    C334 418 391 354 391 264
+    L391 163
+    C391 148 383 134 370 127
+    C334 107 296 96 256 96
+    Z"/>
+  <path fill="none" stroke="#FFFFFF" stroke-width="26" stroke-linecap="round" stroke-linejoin="round"
+    d="M132 274 L198 274 L222 232 L246 318 L270 156 L294 366 L318 274 L380 274"/>
+</svg>
