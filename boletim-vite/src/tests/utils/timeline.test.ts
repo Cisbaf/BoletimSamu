@@ -17,6 +17,7 @@ function makeRectification(overrides: Partial<Rectification> = {}): Rectificatio
   return {
     id: 1,
     document: 10,
+    reason: "",
     createdAt: "2026-01-03T10:00:00Z",
     status: [
       { id: 101, status: "solicitada", comment: null, createdAt: "2026-01-03T10:00:00Z" },
