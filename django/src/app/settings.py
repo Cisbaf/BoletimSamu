@@ -55,6 +55,7 @@ CSRF_TRUSTED_ORIGINS = [
 ]
 
 USE_X_FORWARDED_HOST = True
+USE_X_FORWARDED_PROTO = True
 
 # Application definition
 REST_FRAMEWORK = {
