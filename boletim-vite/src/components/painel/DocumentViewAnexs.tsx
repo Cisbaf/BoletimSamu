@@ -37,7 +37,7 @@ export function RenderFile({file, imageFit, pdfZoom}: RenderFileProps) {
       getBlob(`${file.fileUrl}`)
       .then(url=> setPdfUrl(url))
       .catch(()=> setPdfUrl(file.fileUrl));
-  }, [fileType])
+  }, [file.fileUrl, fileType])
 
   return (
     <>
