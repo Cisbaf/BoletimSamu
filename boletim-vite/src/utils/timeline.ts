@@ -96,12 +96,12 @@ export function mergeTimelineEvents(
   }));
 
   const rectificationEvents: TimelineEvent[] = rectifications.flatMap((rectification) =>
-    (rectification.status ?? []).map((item) => ({
+    (rectification.status ?? []).map((item, idx) => ({
       key: `rectification-${rectification.id}-${item.id}`,
       kind: "rectification" as const,
       status: item.status,
       label: STATUS_LABEL[item.status] ?? item.status,
-      comment: item.comment,
+      comment: idx === 0 && rectification.reason ? rectification.reason : item.comment,
       userName: item.userName,
       createdAt: item.createdAt,
     }))

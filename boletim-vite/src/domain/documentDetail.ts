@@ -78,6 +78,7 @@ export interface RectificationStatus {
 export interface Rectification {
   id: number;
   document: number;
+  reason: string;
   status: RectificationStatus[];
   createdAt: string;
 }

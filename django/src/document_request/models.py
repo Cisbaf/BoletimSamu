@@ -218,6 +218,16 @@ class DocumentRectification(models.Model):
         help_text=_("CPF informado para confirmar a identidade de quem solicitou a retificação."),
     )
 
+    reason = models.TextField(
+        _("Motivo da retificação"),
+        max_length=500,
+        blank=False,
+        null=False,
+        default="",
+        db_column="motivo_retificacao",
+        help_text=_("Descrição do motivo da retificação fornecida pelo solicitante."),
+    )
+
     created_at = models.DateTimeField(
         _("Criado em"),
         auto_now_add=True,

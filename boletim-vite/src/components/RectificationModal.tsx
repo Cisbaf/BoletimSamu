@@ -31,6 +31,7 @@ export default function RectificationModal({
   onSuccess,
 }: RectificationModalProps) {
   const [cpf, setCpf] = React.useState("");
+  const [reason, setReason] = React.useState("");
   const [fieldError, setFieldError] = React.useState<string | null>(null);
   const [confirmed, setConfirmed] = React.useState(false);
   const { error: showErrorToast } = useToast();
@@ -50,6 +51,7 @@ export default function RectificationModal({
 
   function reset() {
     setCpf("");
+    setReason("");
     setFieldError(null);
     setConfirmed(false);
   }
@@ -67,8 +69,13 @@ export default function RectificationModal({
       return;
     }
 
+    if (!reason.trim()) {
+      setFieldError("Descreva o motivo da retificação.");
+      return;
+    }
+
     setFieldError(null);
-    post({ protocol, cpf: digits });
+    post({ protocol, cpf: digits, reason: reason.trim() });
   }
 
   return (
@@ -92,6 +99,8 @@ export default function RectificationModal({
               <RequestState
                 cpf={cpf}
                 setCpf={setCpf}
+                reason={reason}
+                setReason={setReason}
                 fieldError={fieldError}
                 loading={loading}
                 onConfirm={handleConfirm}
@@ -110,13 +119,15 @@ export default function RectificationModal({
 interface RequestStateProps {
   cpf: string;
   setCpf: (value: string) => void;
+  reason: string;
+  setReason: (value: string) => void;
   fieldError: string | null;
   loading: boolean;
   onConfirm: () => void;
   onCancel: () => void;
 }
 
-function RequestState({ cpf, setCpf, fieldError, loading, onConfirm, onCancel }: RequestStateProps) {
+function RequestState({ cpf, setCpf, reason, setReason, fieldError, loading, onConfirm, onCancel }: RequestStateProps) {
   return (
     <MotionBox initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
       <Box px={6} pt={6} pb={5} borderBottom="1px solid #F3F4F6">
@@ -153,6 +164,38 @@ function RequestState({ cpf, setCpf, fieldError, loading, onConfirm, onCancel }:
         </Text>
 
         <Text fontSize="12px" fontWeight="600" color="#374151" mb={2}>
+          Por que deseja retificar este documento?
+        </Text>
+
+        <textarea
+          placeholder="Descreva brevemente o erro identificado..."
+          value={reason}
+          onChange={(e) => setReason(e.target.value)}
+          style={{
+            width: "100%",
+            minHeight: "80px",
+            padding: "10px 12px",
+            border: "1px solid #E5E7EB",
+            borderRadius: "12px",
+            fontSize: "14px",
+            fontFamily: "inherit",
+            resize: "vertical",
+            boxSizing: "border-box",
+            backgroundColor: "#F9FAFB",
+          }}
+          onFocus={(e) => {
+            e.currentTarget.style.borderColor = "#A855F7";
+            e.currentTarget.style.backgroundColor = "white";
+            e.currentTarget.style.boxShadow = "0 0 0 3px rgba(168,85,247,0.12)";
+          }}
+          onBlur={(e) => {
+            e.currentTarget.style.borderColor = "#E5E7EB";
+            e.currentTarget.style.backgroundColor = "#F9FAFB";
+            e.currentTarget.style.boxShadow = "none";
+          }}
+        />
+
+        <Text fontSize="12px" fontWeight="600" color="#374151" mb={2} mt={4}>
           Confirme seu CPF para continuar
         </Text>
 

@@ -48,7 +48,7 @@ class DocumentRectificationDetailSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = DocumentRectification
-        fields = ["id", "document", "status", "created_at"]
+        fields = ["id", "document", "status", "reason", "created_at"]
 
 
 class DocumentRectificationCreateSerializer(serializers.Serializer):
@@ -61,14 +61,21 @@ class DocumentRectificationCreateSerializer(serializers.Serializer):
     - o pedido precisa estar confirmado
     - o CPF informado precisa conferir com o do solicitante cadastrado
     - não pode haver outra retificação em andamento para o mesmo pedido
+    - o motivo da retificação é obrigatório
     """
     cpf = serializers.CharField(write_only=True)
+    reason = serializers.CharField(write_only=True, max_length=500)
 
     def validate_cpf(self, value):
         digits = re.sub(r"\D", "", value or "")
         if len(digits) != 11:
             raise serializers.ValidationError("CPF inválido.")
         return digits
+
+    def validate_reason(self, value):
+        if not value or not value.strip():
+            raise serializers.ValidationError("Informe o motivo da retificação.")
+        return value.strip()
 
     def validate(self, data):
         document = self.context["document"]
@@ -99,6 +106,7 @@ class DocumentRectificationCreateSerializer(serializers.Serializer):
         return DocumentRectification.objects.create(
             document=document,
             requested_cpf=validated_data["cpf"],
+            reason=validated_data["reason"],
         )
 
 
