@@ -6,7 +6,6 @@ import {
   MdReportProblem,
   MdVerifiedUser,
   MdBolt,
-  MdOutlineAttachMoney,
   MdOutlineLock,
   MdOutlineDescription,
 } from "react-icons/md";
