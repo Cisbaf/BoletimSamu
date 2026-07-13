@@ -20,7 +20,7 @@ describe("DocumentSchema", () => {
         date: "2026-01-29",
         time: "14:35:00",
         patient_name: "Maria da Silva",
-        city: "NOVA IGUACU",
+        city: "NOVA IGUAÇU",
         neighborhood: "Centro",
         address: "Rua Doutor Barros Júnior, 245",
         reason: "Queda com possível fratura",
@@ -30,11 +30,9 @@ describe("DocumentSchema", () => {
         notes: "Paciente consciente",
       },
 
-      documents: [
-        new File(["fake"], "paciente.jpg", { type: "image/jpeg" }),
-      ],
-
-      document_types: ["PATIENT_ID"],
+      documents: {
+        PATIENT_ID: new File(["fake"], "paciente.jpg", { type: "image/jpeg" }),
+      },
     };
 
     const result = DocumentSchema.safeParse(validData);
@@ -60,7 +58,7 @@ describe("DocumentSchema", () => {
         date: "2026-01-29",
         time: "14:35:00",
         patient_name: "Maria da Silva",
-        city: "NOVA IGUACU",
+        city: "NOVA IGUAÇU",
         neighborhood: "Centro",
         address: "Rua Doutor Barros Júnior, 245",
         reason: "Queda",
@@ -68,11 +66,9 @@ describe("DocumentSchema", () => {
         occurrence_number: "OC-2026-000123",
       },
 
-      documents: [
-        new File(["fake"], "paciente.jpg"),
-      ],
-
-      document_types: ["PATIENT_ID"],
+      documents: {
+        PATIENT_ID: new File(["fake"], "paciente.jpg"),
+      },
     };
 
     const result = DocumentSchema.safeParse(invalidData);
@@ -202,7 +198,7 @@ describe("ApplicantSchema – validação condicional", () => {
       applicant_type: "REPRESENTATIVE",
       relationship_degree: "ATTORNEY",
       full_name: "Maria da Silva",
-      cpf: "12345678900",
+      cpf: "18714933748",
       rg: "1234567",
       email: "maria@email.com",
       address: "Rua B, 456",

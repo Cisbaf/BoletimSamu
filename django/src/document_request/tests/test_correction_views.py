@@ -6,10 +6,13 @@ Testes da API de correção de preenchimento:
 - Correções embutidas nos endpoints de detalhe público e administrativo
 """
 import json
+import shutil
+import tempfile
 from random import random
 
 from django.core.cache import cache
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.test import override_settings
 from django.urls import reverse
 from rest_framework.test import APITestCase
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -30,6 +33,12 @@ from applicant_document.models import ApplicantDocument
 CORRECTION_CREATE_URL = "document-correction-create"
 CORRECTION_SUBMIT_URL = "document-correction-submit"
 CORRECTION_STATUS_URL = "correction-status-create"
+
+TEMP_MEDIA_ROOT = tempfile.mkdtemp()
+
+
+def tearDownModule():
+    shutil.rmtree(TEMP_MEDIA_ROOT, ignore_errors=True)
 
 
 def make_user(username=None):
@@ -95,6 +104,7 @@ def make_correction(doc, field_keys=("applicant.full_name",), comment="Corrigir"
     return correction
 
 
+@override_settings(MEDIA_ROOT=TEMP_MEDIA_ROOT)
 class DocumentCorrectionCreateAPITest(APITestCase):
     def setUp(self):
         cache.clear()
@@ -234,6 +244,7 @@ class DocumentCorrectionCreateAPITest(APITestCase):
         self.assertEqual(DocumentCorrection.objects.count(), 0)
 
 
+@override_settings(MEDIA_ROOT=TEMP_MEDIA_ROOT)
 class DocumentCorrectionSubmitAPITest(APITestCase):
     def setUp(self):
         cache.clear()
@@ -410,6 +421,7 @@ class DocumentCorrectionSubmitAPITest(APITestCase):
         self.assertIn("answers", response.data)
 
 
+@override_settings(MEDIA_ROOT=TEMP_MEDIA_ROOT)
 class DocumentCorrectionStatusAPITest(APITestCase):
     def setUp(self):
         cache.clear()
@@ -545,6 +557,7 @@ class DocumentCorrectionStatusAPITest(APITestCase):
         self.assertEqual(evento.user, self.user)
 
 
+@override_settings(MEDIA_ROOT=TEMP_MEDIA_ROOT)
 class DocumentCorrectionInTimelineAPITest(APITestCase):
     """
     Garante que a correção aparece embutida na consulta pública e no

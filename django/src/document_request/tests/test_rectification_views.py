@@ -63,6 +63,7 @@ class DocumentRectificationCreateAPITest(APITestCase):
         response = self.client.post(self.url, {
             "protocol": doc.protocol,
             "cpf": "187.149.337-48",
+            "reason": "Endereço incorreto",
         })
 
         self.assertEqual(response.status_code, 201)
@@ -79,6 +80,7 @@ class DocumentRectificationCreateAPITest(APITestCase):
         response = self.client.post(self.url, {
             "protocol": doc.protocol,
             "cpf": "99999999999",
+            "reason": "Endereço incorreto",
         })
 
         self.assertEqual(response.status_code, 400)
@@ -101,6 +103,7 @@ class DocumentRectificationCreateAPITest(APITestCase):
         response = self.client.post(self.url, {
             "protocol": doc.protocol,
             "cpf": "18714933748",
+            "reason": "Endereço incorreto",
         })
 
         self.assertEqual(response.status_code, 400)
@@ -111,6 +114,7 @@ class DocumentRectificationCreateAPITest(APITestCase):
         response = self.client.post(self.url, {
             "protocol": "2026-9999",
             "cpf": "18714933748",
+            "reason": "Endereço incorreto",
         })
 
         self.assertEqual(response.status_code, 404)
@@ -122,6 +126,7 @@ class DocumentRectificationCreateAPITest(APITestCase):
         response = self.client.post(self.url, {
             "protocol": doc.protocol,
             "cpf": "18714933748",
+            "reason": "Endereço incorreto",
         })
 
         self.assertEqual(response.status_code, 400)
@@ -134,6 +139,7 @@ class DocumentRectificationCreateAPITest(APITestCase):
         response = self.client.post(self.url, {
             "protocol": doc.protocol,
             "cpf": "123",
+            "reason": "Endereço incorreto",
         })
 
         self.assertEqual(response.status_code, 400)
@@ -147,6 +153,7 @@ class DocumentRectificationCreateAPITest(APITestCase):
         response = self.client.post(self.url, {
             "protocol": doc.protocol,
             "cpf": "18714933748",
+            "reason": "Endereço incorreto",
         })
 
         self.assertEqual(response.status_code, 201)
