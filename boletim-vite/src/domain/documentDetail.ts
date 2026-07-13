@@ -3,6 +3,7 @@
  * ========================= */
 
 import type { APPLICANT_TYPES, DOCUMENT_TYPES, RELATIONSHIP_DEGREES } from "./documentSchemaForm";
+import type { Correction } from "./documentCorrection";
 
 export interface DocumentDetail {
   id: number;
@@ -10,6 +11,7 @@ export interface DocumentDetail {
   incident: IncidentResponse;
   status: Status[];
   rectifications: Rectification[];
+  corrections: Correction[];
   documents: DocumentFile[];
   protocol: string;
   purpose: string;

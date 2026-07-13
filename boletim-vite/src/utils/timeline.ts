@@ -1,4 +1,5 @@
 import type { Rectification, RectificationStatusValue, Status } from "../domain/documentDetail";
+import type { Correction, CorrectionStatusValue } from "../domain/documentCorrection";
 
 /**
  * Rótulos e cores de todos os status exibidos na linha do tempo de um
@@ -11,24 +12,38 @@ import type { Rectification, RectificationStatusValue, Status } from "../domain/
  */
 
 export const STATUS_LABEL: Record<string, string> = {
+  // Pedido
   aguardando: "Aguardando",
   confirmado: "Confirmado",
   cancelado: "Cancelado",
+  // Retificação
   solicitada: "Retificação Solicitada",
   agendada: "Retificação Agendada",
   concluida: "Retificação Concluída",
   cancelada: "Retificação Cancelada",
+  // Correção de Preenchimento
+  pendente: "Correção de Preenchimento",
+  enviada: "Verificando Mudanças",
+  aprovada: "Correção Aprovada",
+  rejeitada: "Correção Rejeitada",
 };
 
 // Nome do color scheme do Chakra usado na timeline horizontal (painel).
 export const STATUS_COLOR: Record<string, string> = {
+  // Pedido
   aguardando: "yellow",
   confirmado: "green",
   cancelado: "red",
+  // Retificação
   solicitada: "purple",
   agendada: "blue",
   concluida: "green",
   cancelada: "red",
+  // Correção de Preenchimento
+  pendente: "orange",
+  enviada: "cyan",
+  aprovada: "green",
+  rejeitada: "red",
 };
 
 export const STATUS_STYLE: Record<string, {
@@ -62,9 +77,26 @@ export const STATUS_STYLE: Record<string, {
     dot: "#EF4444", line: "#FECACA", badge: "#FEE2E2",
     badgeColor: "#991B1B", badgeBorder: "#FECACA", commentBorder: "#EF4444",
   },
+  // Correção de Preenchimento
+  pendente: {
+    dot: "#F97316", line: "#FED7AA", badge: "#FFF7ED",
+    badgeColor: "#9A3412", badgeBorder: "#FED7AA", commentBorder: "#F97316",
+  },
+  enviada: {
+    dot: "#06B6D4", line: "#A5F3FC", badge: "#ECFEFF",
+    badgeColor: "#0E7490", badgeBorder: "#A5F3FC", commentBorder: "#06B6D4",
+  },
+  aprovada: {
+    dot: "#22C55E", line: "#BBF7D0", badge: "#DCFCE7",
+    badgeColor: "#166534", badgeBorder: "#BBF7D0", commentBorder: "#22C55E",
+  },
+  rejeitada: {
+    dot: "#EF4444", line: "#FECACA", badge: "#FEE2E2",
+    badgeColor: "#991B1B", badgeBorder: "#FECACA", commentBorder: "#EF4444",
+  },
 };
 
-export type TimelineEventKind = "status" | "rectification";
+export type TimelineEventKind = "status" | "rectification" | "correction";
 
 export interface TimelineEvent {
   key: string;
@@ -78,12 +110,16 @@ export interface TimelineEvent {
 
 /**
  * Une o histórico de status do pedido com o(s) histórico(s) de retificação
- * em uma única linha do tempo, ordenada cronologicamente, para que o
- * solicitante acompanhe tudo em um só lugar.
+ * e de correção de preenchimento em uma única linha do tempo, ordenada
+ * cronologicamente, para que o solicitante acompanhe tudo em um só lugar.
+ *
+ * O parâmetro `corrections` é opcional para manter compatibilidade com
+ * chamadas existentes que ainda não passam esse terceiro argumento.
  */
 export function mergeTimelineEvents(
   status: Status[] = [],
-  rectifications: Rectification[] = []
+  rectifications: Rectification[] = [],
+  corrections: Correction[] = []
 ): TimelineEvent[] {
   const statusEvents: TimelineEvent[] = status.map((item) => ({
     key: `status-${item.id}`,
@@ -107,7 +143,19 @@ export function mergeTimelineEvents(
     }))
   );
 
-  return [...statusEvents, ...rectificationEvents].sort(
+  const correctionEvents: TimelineEvent[] = corrections.flatMap((correction) =>
+    (correction.status ?? []).map((item) => ({
+      key: `correction-${correction.id}-${item.id}`,
+      kind: "correction" as const,
+      status: item.status,
+      label: STATUS_LABEL[item.status] ?? item.status,
+      comment: item.comment,
+      userName: item.userName,
+      createdAt: item.createdAt,
+    }))
+  );
+
+  return [...statusEvents, ...rectificationEvents, ...correctionEvents].sort(
     (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
   );
 }
@@ -143,4 +191,36 @@ export function hasOpenRectification(rectifications: Rectification[] = []): bool
 /** Status atual (mais recente) do pedido, a partir do histórico de status. */
 export function currentDocumentStatus(status: Status[] = []): string | undefined {
   return status[status.length - 1]?.status;
+}
+
+/* =========================
+ * CORREÇÃO DE PREENCHIMENTO
+ * ========================= */
+
+const OPEN_CORRECTION_STATUSES = new Set<CorrectionStatusValue>(["pendente", "enviada"]);
+
+/**
+ * Transições permitidas para o status de uma correção de preenchimento
+ * (espelha DocumentCorrectionStatus.ALLOWED_TRANSITIONS no backend).
+ * Usado para decidir quais ações mostrar ao admin — a validação de fato
+ * acontece no backend.
+ */
+export const CORRECTION_ALLOWED_TRANSITIONS: Record<CorrectionStatusValue, CorrectionStatusValue[]> = {
+  pendente: ["rejeitada"],
+  enviada: ["aprovada", "rejeitada"],
+  aprovada: [],
+  rejeitada: [],
+};
+
+/** Retorna a correção em andamento (pendente/enviada), se houver. */
+export function getOpenCorrection(corrections: Correction[] = []): Correction | undefined {
+  return corrections.find((correction) => {
+    const last = correction.status?.[correction.status.length - 1];
+    return !!last && OPEN_CORRECTION_STATUSES.has(last.status);
+  });
+}
+
+/** Indica se há uma correção de preenchimento em andamento. */
+export function hasOpenCorrection(corrections: Correction[] = []): boolean {
+  return !!getOpenCorrection(corrections);
 }

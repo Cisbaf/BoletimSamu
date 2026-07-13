@@ -3,7 +3,8 @@ import type { DocumentSimpleDetail } from "../domain/documentSimpleDetail";
 import { Box, Flex, Text } from "@chakra-ui/react";
 import DocumentStatusTimeLine, { statusLabel } from "./DocumentStatusTimeLine";
 import RectificationModal from "./RectificationModal";
-import { hasOpenRectification } from "../utils/timeline";
+import CorrectionModal from "./CorrectionModal";
+import { hasOpenRectification, getOpenCorrection } from "../utils/timeline";
 
 interface DocumentDetailProps {
   data: DocumentSimpleDetail;
@@ -23,11 +24,15 @@ const STATUS_BADGE: Record<string, { bg: string; color: string; border: string }
 
 export default function DocumentStatusDetail({ data, onRectificationCreated }: DocumentDetailProps) {
   const [rectificationOpen, setRectificationOpen] = React.useState(false);
+  const [correctionOpen, setCorrectionOpen] = React.useState(false);
   const finalStatus = data.status[data.status.length - 1];
   const badge = STATUS_BADGE[finalStatus.status] ?? { bg: "#F3F4F6", color: "#6B7280", border: "#E5E7EB" };
 
   const canRequestRectification =
     finalStatus.status === "confirmado" && !hasOpenRectification(data.rectifications);
+
+  const openCorrection = getOpenCorrection(data.corrections ?? []);
+  const correctionLastStatus = openCorrection?.status?.[openCorrection.status.length - 1]?.status;
 
   return (
     <Box
@@ -108,38 +113,104 @@ export default function DocumentStatusDetail({ data, onRectificationCreated }: D
             </Text>
           </Box>
         </Flex>
-        {/* ── Ação de retificação ─────────────────────────────────── */}
-        {canRequestRectification && (
-          <Box
-            role="button"
-            tabIndex={0}
-            onClick={() => setRectificationOpen(true)}
-            onKeyDown={(e) => { if (e.key === "Enter") setRectificationOpen(true); }}
-            mt={4}
-            display="inline-flex"
-            alignItems="center"
-            gap={2}
-            px={4}
-            py="9px"
-            bg="#F3E8FF"
-            color="#7C3AED"
-            border="1px solid #E9D5FF"
-            borderRadius="10px"
-            fontSize="13px"
-            fontWeight="700"
-            cursor="pointer"
-            transition="all 0.15s"
-            _hover={{ bg: "#E9D5FF" }}
-          >
-            <svg width="14" height="14" fill="none" viewBox="0 0 24 24">
-              <path
-                d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5Z"
-                stroke="#7C3AED" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-              />
-            </svg>
-            Solicitar Retificação
-          </Box>
-        )}
+        {/* ── Ações ───────────────────────────────────────────────── */}
+        <Flex mt={4} gap={3} wrap="wrap">
+          {/* Botão de retificação */}
+          {canRequestRectification && (
+            <Box
+              role="button"
+              tabIndex={0}
+              onClick={() => setRectificationOpen(true)}
+              onKeyDown={(e) => { if (e.key === "Enter") setRectificationOpen(true); }}
+              display="inline-flex"
+              alignItems="center"
+              gap={2}
+              px={4}
+              py="9px"
+              bg="#F3E8FF"
+              color="#7C3AED"
+              border="1px solid #E9D5FF"
+              borderRadius="10px"
+              fontSize="13px"
+              fontWeight="700"
+              cursor="pointer"
+              transition="all 0.15s"
+              _hover={{ bg: "#E9D5FF" }}
+            >
+              <svg width="14" height="14" fill="none" viewBox="0 0 24 24">
+                <path
+                  d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5Z"
+                  stroke="#7C3AED" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                />
+              </svg>
+              Solicitar Retificação
+            </Box>
+          )}
+
+          {/* CTA de correção de preenchimento — pendente */}
+          {openCorrection && correctionLastStatus === "pendente" && (
+            <Box>
+              <Box
+              role="button"
+              tabIndex={0}
+              onClick={() => setCorrectionOpen(true)}
+              onKeyDown={(e) => { if (e.key === "Enter") setCorrectionOpen(true); }}
+              display="inline-flex"
+              alignItems="center"
+              gap={2}
+              px={4}
+              py="9px"
+              bg="#FFF7ED"
+              color="#C2410C"
+              border="1px solid #FED7AA"
+              borderRadius="10px"
+              fontSize="13px"
+              fontWeight="700"
+              cursor="pointer"
+              transition="all 0.15s"
+              _hover={{ bg: "#FED7AA" }}
+            >
+              <svg width="14" height="14" fill="none" viewBox="0 0 24 24">
+                <path
+                  d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"
+                  stroke="#C2410C" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"
+                />
+                <path
+                  d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5Z"
+                  stroke="#C2410C" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"
+                />
+              </svg>
+              Corrigir agora
+            </Box>
+            <Text fontSize="12px" color="#9CA3AF" mt="2px">
+              A correção de preenchimento está pendente. Clique no botão acima para iniciar a correção.
+            </Text>
+            </Box>
+          )}
+
+          {/* Indicador passivo — enviada (em análise) */}
+          {openCorrection && correctionLastStatus === "enviada" && (
+            <Box
+              display="inline-flex"
+              alignItems="center"
+              gap={2}
+              px={4}
+              py="9px"
+              bg="#ECFEFF"
+              color="#0E7490"
+              border="1px solid #A5F3FC"
+              borderRadius="10px"
+              fontSize="13px"
+              fontWeight="700"
+            >
+              <svg width="14" height="14" fill="none" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="9" stroke="#0E7490" strokeWidth="1.8" />
+                <path d="M12 7v5l3 3" stroke="#0E7490" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              Correção em análise
+            </Box>
+          )}
+        </Flex>
       </Box>
 
       {/* ── Timeline ───────────────────────────────────────────────── */}
@@ -147,6 +218,7 @@ export default function DocumentStatusDetail({ data, onRectificationCreated }: D
         <DocumentStatusTimeLine
           status={data.status}
           rectifications={data.rectifications}
+          corrections={data.corrections}
           showAllMessage
         />
       </Box>
@@ -157,6 +229,16 @@ export default function DocumentStatusDetail({ data, onRectificationCreated }: D
         onOpenChange={setRectificationOpen}
         onSuccess={onRectificationCreated}
       />
+
+      {openCorrection && (
+        <CorrectionModal
+          protocol={data.protocol}
+          correction={openCorrection}
+          open={correctionOpen}
+          onOpenChange={setCorrectionOpen}
+          onSuccess={onRectificationCreated}
+        />
+      )}
     </Box>
   );
 }

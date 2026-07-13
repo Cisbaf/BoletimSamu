@@ -1,5 +1,6 @@
 import { Box, Flex, Text } from "@chakra-ui/react";
 import type { Rectification, Status } from "../domain/documentDetail";
+import type { Correction } from "../domain/documentCorrection";
 import { Tooltip } from "./ui/tooltip";
 import { truncateText } from "../utils/truncateText";
 import {
@@ -13,6 +14,7 @@ import {
 interface TimeLineProps {
   status: Status[];
   rectifications?: Rectification[];
+  corrections?: Correction[];
   showAllMessage?: boolean;
 }
 
@@ -221,8 +223,8 @@ function HorizontalTimeLine({ events }: { events: TimelineEvent[] }) {
 
 // ─── Componente principal ─────────────────────────────────────────────────────
 
-export default function DocumentStatusTimeLine({ status, rectifications, showAllMessage }: TimeLineProps) {
-  const events = mergeTimelineEvents(status, rectifications);
+export default function DocumentStatusTimeLine({ status, rectifications, corrections, showAllMessage }: TimeLineProps) {
+  const events = mergeTimelineEvents(status, rectifications, corrections);
 
   if (showAllMessage) {
     return <VerticalTimeLine events={events} />;

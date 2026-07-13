@@ -5,6 +5,9 @@ from .models import (
     DocumentStatus,
     DocumentRectification,
     DocumentRectificationStatus,
+    DocumentCorrection,
+    DocumentCorrectionField,
+    DocumentCorrectionStatus,
 )
 from applicant.models import Applicant
 from incident.models import Incident
@@ -47,3 +50,16 @@ class DocumentRectificationAdmin(admin.ModelAdmin):
 @admin.register(DocumentRectificationStatus)
 class DocumentRectificationStatusAdmin(admin.ModelAdmin):
     list_display = ("id", "rectification", "status", "created_at")
+
+@admin.register(DocumentCorrection)
+class DocumentCorrectionAdmin(admin.ModelAdmin):
+    list_display = ("id", "document", "created_at")
+    readonly_fields = ("created_at",)
+
+@admin.register(DocumentCorrectionField)
+class DocumentCorrectionFieldAdmin(admin.ModelAdmin):
+    list_display = ("id", "correction", "field_key", "field_label", "submitted_at")
+
+@admin.register(DocumentCorrectionStatus)
+class DocumentCorrectionStatusAdmin(admin.ModelAdmin):
+    list_display = ("id", "correction", "status", "created_at")

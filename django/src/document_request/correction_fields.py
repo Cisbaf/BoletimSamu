@@ -1,0 +1,27 @@
+from django.db import models
+
+
+class CorrectionFieldKey(models.TextChoices):
+    APPLICANT_FULL_NAME = "applicant.full_name", "Nome Completo"
+    APPLICANT_CPF = "applicant.cpf", "CPF"
+    APPLICANT_RG = "applicant.rg", "RG"
+    APPLICANT_EMAIL = "applicant.email", "E-mail"
+    APPLICANT_ADDRESS = "applicant.address", "Endereço"
+    APPLICANT_PHONE = "applicant.phone", "Telefone"
+    INCIDENT_DATE = "incident.date", "Data da Ocorrência"
+    INCIDENT_TIME = "incident.time", "Hora da Ocorrência"
+    INCIDENT_PATIENT_NAME = "incident.patient_name", "Nome do Paciente"
+    INCIDENT_CITY = "incident.city", "Município"
+    INCIDENT_NEIGHBORHOOD = "incident.neighborhood", "Bairro"
+    INCIDENT_ADDRESS = "incident.address", "Endereço da Ocorrência"
+    INCIDENT_REASON = "incident.reason", "Motivo da Solicitação da Ambulância"
+    INCIDENT_ATTENDANCE_LOCATION = "incident.attendance_location", "Local do Atendimento"
+    INCIDENT_OTHER_LOCATION = "incident.other_location_description", "Descrição do Outro Local"
+    INCIDENT_OCCURRENCE_NUMBER = "incident.occurrence_number", "Número da Ocorrência"
+    INCIDENT_NOTES = "incident.notes", "Observações"
+    DOCUMENT_OTHER_PURPOSE = "document.other_purpose", "Outro Motivo"
+    ATTACHMENT_PATIENT_ID = "attachment.PATIENT_ID", "Documento com foto do paciente"
+    ATTACHMENT_APPLICANT_ID = "attachment.APPLICANT_ID", "Documento com foto do solicitante"
+    ATTACHMENT_MARRIAGE_CERTIFICATE = "attachment.MARRIAGE_CERTIFICATE", "Certidão de casamento / União estável"
+    ATTACHMENT_POWER_OF_ATTORNEY = "attachment.POWER_OF_ATTORNEY", "Procuração específica"
+    ATTACHMENT_DEATH_CERTIFICATE = "attachment.DEATH_CERTIFICATE", "Certidão de Óbito"

@@ -1,5 +1,6 @@
 import React from "react";
 import type { DocumentDetail, RectificationStatusValue } from "../domain/documentDetail";
+import type { CorrectionField, CorrectionStatusValue } from "../domain/documentCorrection";
 import { ToCamelCase } from "../utils/camelCase";
 import { useGetAuth } from "../hooks/useGetAuth";
 import { usePostAuth } from "../hooks/usePostAuth";
@@ -13,6 +14,8 @@ interface DocumentDetailType {
     updateForProtocol: (protocol: string) => void;
     newStatus: (type: "confirmado" | "cancelado", comment: string) => Promise<any>;
     newRectificationStatus: (rectificationId: number, type: RectificationStatusValue, comment: string) => Promise<any>;
+    newCorrection: (documentId: number, fields: Pick<CorrectionField, "fieldKey" | "adminComment">[]) => Promise<any>;
+    newCorrectionStatus: (correctionId: number, status: CorrectionStatusValue, comment: string) => Promise<any>;
     refetch: () => void;
 }
 
@@ -48,6 +51,22 @@ export function DocumentDetailProvider({ children, useDocumentList, removedForNe
 
     const { post: postRectificationStatus, loading: rectificationLoading } = usePostAuth({
         url: `${ApiBaseUrl}/document/rectifications/status/`,
+        onError(error) {
+            err({ title: "Erro ao conectar-se", description: error.message})
+            hideLoading();
+        }
+    });
+
+    const { post: postCorrection } = usePostAuth({
+        url: `${ApiBaseUrl}/document/corrections/create/`,
+        onError(error) {
+            err({ title: "Erro ao conectar-se", description: error.message})
+            hideLoading();
+        }
+    });
+
+    const { post: postCorrectionStatus } = usePostAuth({
+        url: `${ApiBaseUrl}/document/corrections/status/`,
         onError(error) {
             err({ title: "Erro ao conectar-se", description: error.message})
             hideLoading();
@@ -110,6 +129,39 @@ export function DocumentDetailProvider({ children, useDocumentList, removedForNe
         return response;
     }
 
+    const newCorrection = async (documentId: number, fields: Pick<CorrectionField, "fieldKey" | "adminComment">[]) => {
+        showLoading("Criando solicitação de correção...");
+        const response = await postCorrection({
+            document: documentId,
+            fields: fields.map((f) => ({ field_key: f.fieldKey, comment: f.adminComment })),
+        });
+
+        if (!response) return hideLoading();
+
+        success({ title: "Correção solicitada com sucesso!" });
+        hideLoading();
+        refetch();
+        onChanged?.();
+        return response;
+    };
+
+    const newCorrectionStatus = async (correctionId: number, status: CorrectionStatusValue, comment: string) => {
+        showLoading("Atualizando status da correção...");
+        const response = await postCorrectionStatus({
+            correction: correctionId,
+            status,
+            comment,
+        });
+
+        if (!response) return hideLoading();
+
+        success({ title: "Status da correção atualizado!" });
+        hideLoading();
+        refetch();
+        onChanged?.();
+        return response;
+    };
+
     React.useEffect(()=>{
         if (data) setDocument(data);
     }, [data]);
@@ -129,7 +181,9 @@ export function DocumentDetailProvider({ children, useDocumentList, removedForNe
             refetch,
             updateForProtocol(protocol) { setProtocol(protocol) },
             newStatus,
-            newRectificationStatus
+            newRectificationStatus,
+            newCorrection,
+            newCorrectionStatus,
         }}>
             {children}
         </DocumentDetailContext.Provider>

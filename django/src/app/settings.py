@@ -70,6 +70,7 @@ REST_FRAMEWORK = {
     "DEFAULT_THROTTLE_RATES": {
         "document_create": "10/hour",
         "document_rectification_create": "10/hour",
+        "document_correction_submit": "10/hour",
     },
 }
 

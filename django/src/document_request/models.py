@@ -4,6 +4,7 @@ from django.utils.translation import gettext_lazy as _
 from django.core.exceptions import ValidationError
 from protocol_counter.models import ProtocolCounter
 from django.contrib.auth.models import User
+from .correction_fields import CorrectionFieldKey
 
 class DocumentRequest(models.Model):
     """
@@ -120,6 +121,22 @@ class DocumentRequest(models.Model):
         }
         for rectification in self.rectifications.all():
             last_status = rectification.status.order_by("-created_at").first()
+            if last_status and last_status.status in open_statuses:
+                return True
+        return False
+
+    def has_open_correction(self):
+        """
+        Indica se já existe uma correção de preenchimento em andamento
+        (pendente ou enviada) para este pedido, impedindo a abertura de
+        duplicatas.
+        """
+        open_statuses = {
+            DocumentCorrectionStatus.StatusChoices.PENDENTE,
+            DocumentCorrectionStatus.StatusChoices.ENVIADA,
+        }
+        for correction in self.corrections.all():
+            last_status = correction.status.order_by("-created_at").first()
             if last_status and last_status.status in open_statuses:
                 return True
         return False
@@ -320,6 +337,182 @@ class DocumentRectificationStatus(models.Model):
         ordering = ["created_at"]
         verbose_name = "Status da Retificação"
         verbose_name_plural = "Status das Retificações"
+
+    def __str__(self):
+        return self.status
+
+
+class DocumentCorrection(models.Model):
+    """
+    Representa uma solicitação de correção de preenchimento aberta pelo
+    administrador sobre um DocumentRequest, para que o cidadão corrija
+    campos específicos antes da decisão de aprovar ou cancelar o pedido.
+
+    Assim como o pedido tem seu DocumentStatus, a correção tem seu
+    próprio histórico append-only (DocumentCorrectionStatus).
+    """
+
+    document = models.ForeignKey(
+        to=DocumentRequest,
+        on_delete=models.CASCADE,
+        related_name="corrections",
+    )
+
+    created_at = models.DateTimeField(
+        _("Criado em"),
+        auto_now_add=True,
+        db_column="criado_em",
+    )
+
+    class Meta:
+        db_table = "correcao_preenchimento"
+        ordering = ["created_at"]
+        verbose_name = "Correção de Preenchimento"
+        verbose_name_plural = "Correções de Preenchimento"
+
+    def save(self, *args, **kwargs):
+        new = self.pk is None
+        super().save(*args, **kwargs)
+        if new:
+            DocumentCorrectionStatus.objects.create(correction=self)
+
+    def __str__(self):
+        return f"Correção #{self.pk} - {self.document.protocol}"
+
+
+class DocumentCorrectionField(models.Model):
+    """
+    Campo individual apontado como incorreto dentro de uma correção de
+    preenchimento. Armazena o campo, o comentário do administrador,
+    o novo valor ou arquivo enviado pelo cidadão e a data de envio.
+    """
+
+    correction = models.ForeignKey(
+        to=DocumentCorrection,
+        on_delete=models.CASCADE,
+        related_name="fields",
+    )
+
+    field_key = models.CharField(
+        _("Campo"),
+        max_length=60,
+        choices=CorrectionFieldKey.choices,
+        db_column="campo_chave",
+    )
+
+    field_label = models.CharField(
+        _("Rótulo do campo"),
+        max_length=100,
+        db_column="campo_rotulo",
+        help_text=_("Snapshot do rótulo legível no momento da criação."),
+    )
+
+    admin_comment = models.TextField(
+        _("Comentário do administrador"),
+        db_column="comentario_admin",
+    )
+
+    new_value = models.TextField(
+        _("Novo valor"),
+        blank=True,
+        null=True,
+        db_column="novo_valor",
+    )
+
+    new_file = models.FileField(
+        _("Novo arquivo"),
+        blank=True,
+        null=True,
+        upload_to="corrections/%Y/%m/",
+        db_column="novo_arquivo",
+    )
+
+    submitted_at = models.DateTimeField(
+        _("Enviado em"),
+        blank=True,
+        null=True,
+        db_column="enviado_em",
+    )
+
+    class Meta:
+        db_table = "correcao_preenchimento_campo"
+        verbose_name = "Campo da Correção"
+        verbose_name_plural = "Campos da Correção"
+
+    def __str__(self):
+        return f"{self.field_label} (correção #{self.correction_id})"
+
+
+class DocumentCorrectionStatus(models.Model):
+    """
+    Evento imutável do andamento de uma correção de preenchimento
+    (append-only), no mesmo espírito de DocumentRectificationStatus:
+    cada mudança gera uma nova linha e o histórico completo é preservado.
+    """
+
+    correction = models.ForeignKey(
+        to=DocumentCorrection,
+        on_delete=models.CASCADE,
+        related_name="status",
+    )
+
+    comment = models.TextField(blank=True, null=True)
+
+    class StatusChoices(models.TextChoices):
+        PENDENTE = "pendente", "Pendente"
+        ENVIADA = "enviada", "Enviada"
+        APROVADA = "aprovada", "Aprovada"
+        REJEITADA = "rejeitada", "Rejeitada"
+
+    status = models.CharField(
+        max_length=20,
+        choices=StatusChoices.choices,
+        default=StatusChoices.PENDENTE,
+        db_column="status",
+    )
+
+    created_at = models.DateTimeField(
+        _("Criado em"),
+        auto_now_add=True,
+        db_column="criado_em",
+    )
+
+    user = models.ForeignKey(to=User, on_delete=models.SET_NULL, blank=True, null=True)
+
+    ALLOWED_TRANSITIONS = {
+        StatusChoices.PENDENTE: {StatusChoices.ENVIADA, StatusChoices.REJEITADA},
+        StatusChoices.ENVIADA: {StatusChoices.APROVADA, StatusChoices.REJEITADA},
+        StatusChoices.APROVADA: set(),   # estado terminal
+        StatusChoices.REJEITADA: set(),  # estado terminal
+    }
+
+    def change_status(self, new_status, user=None, comment=None):
+        """
+        Valida a transição e cria um novo evento de status (append-only).
+        Nunca muta o registro atual — cada mudança gera uma nova linha imutável.
+        """
+        if new_status not in dict(self.StatusChoices.choices):
+            raise ValidationError(f"Status inválido: '{new_status}'.")
+
+        allowed = self.ALLOWED_TRANSITIONS.get(self.status, set())
+
+        if new_status not in allowed:
+            raise ValidationError(
+                f"Transição de '{self.status}' para '{new_status}' não é permitida."
+            )
+
+        return DocumentCorrectionStatus.objects.create(
+            correction=self.correction,
+            status=new_status,
+            user=user,
+            comment=comment,
+        )
+
+    class Meta:
+        db_table = "status_correcao"
+        ordering = ["created_at"]
+        verbose_name = "Status da Correção"
+        verbose_name_plural = "Status das Correções"
 
     def __str__(self):
         return self.status

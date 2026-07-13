@@ -9,6 +9,9 @@ from .views import (
     DocumentStatusCreateAPIView,
     DocumentRectificationCreateAPIView,
     DocumentRectificationStatusCreateAPIView,
+    DocumentCorrectionCreateAPIView,
+    DocumentCorrectionSubmitAPIView,
+    DocumentCorrectionStatusCreateAPIView,
 )
 
 # 🔓 Router público
@@ -53,5 +56,22 @@ urlpatterns = [
         'rectifications/status/',
         DocumentRectificationStatusCreateAPIView.as_view(),
         name="rectification-status-create"
+    ),
+
+    # 🔹 correção de preenchimento
+    path(
+        'corrections/create/',
+        DocumentCorrectionCreateAPIView.as_view(),
+        name="document-correction-create"
+    ),
+    path(
+        'corrections/submit/',
+        DocumentCorrectionSubmitAPIView.as_view(),
+        name="document-correction-submit"
+    ),
+    path(
+        'corrections/status/',
+        DocumentCorrectionStatusCreateAPIView.as_view(),
+        name="correction-status-create"
     ),
 ]

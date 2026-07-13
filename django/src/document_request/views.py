@@ -15,7 +15,19 @@ class DocumentCreateThrottle(AnonRateThrottle):
 
 class DocumentRectificationCreateThrottle(AnonRateThrottle):
     scope = "document_rectification_create"
-from .models import DocumentRequest, DocumentStatus, DocumentRectification, DocumentRectificationStatus
+
+
+class DocumentCorrectionSubmitThrottle(AnonRateThrottle):
+    scope = "document_correction_submit"
+from django.db import transaction
+from .models import (
+    DocumentRequest,
+    DocumentStatus,
+    DocumentRectification,
+    DocumentRectificationStatus,
+    DocumentCorrection,
+    DocumentCorrectionStatus,
+)
 from applicant_document.models import ApplicantDocument
 from .serializers import (
     DocumentRequestSerializer,
@@ -25,7 +37,12 @@ from .serializers import (
     DocumentRectificationDetailSerializer,
     DocumentRectificationCreateSerializer,
     DocumentRectificationStatusDetailSerializer,
+    DocumentCorrectionDetailSerializer,
+    DocumentCorrectionCreateSerializer,
+    DocumentCorrectionSubmitSerializer,
+    DocumentCorrectionStatusDetailSerializer,
 )
+from .services import apply_document_correction
 from utils.formart import convert_document_multipart_to_json
 from django.db.models import OuterRef, Subquery
 #from .services import send_message_wpp_to_admin
@@ -177,7 +194,19 @@ class DocumentPublicViewSet(BaseDocumentRequestViewSet):
     ordering = ["created_at"]
 
     def get_queryset(self):
-        base = DocumentRequest.objects.select_related("applicant")
+        base = (
+            DocumentRequest.objects
+            .select_related("applicant")
+            .prefetch_related(
+                # Evita N+1 na listagem: o serializer embute o histórico de
+                # status do pedido, as retificações e as correções (com seus
+                # campos e status) para cada item.
+                "status",
+                "rectifications__status",
+                "corrections__fields",
+                "corrections__status",
+            )
+        )
         return self.annotate_status(base)
 
 class DocumentDetailViewSet(BaseDocumentRequestViewSet):
@@ -193,7 +222,13 @@ class DocumentDetailViewSet(BaseDocumentRequestViewSet):
                 Prefetch(
                     "applicant__documents",
                     queryset=ApplicantDocument.objects.all()
-                )
+                ),
+                # Evita N+1: histórico de status, retificações e correções
+                # embutidos pelo serializer de detalhe.
+                "status",
+                "rectifications__status",
+                "corrections__fields",
+                "corrections__status",
             )
         )
         return self.annotate_status(base)
@@ -271,4 +306,127 @@ class DocumentRectificationStatusCreateAPIView(APIView):
             return Response({"detail": message}, status=400)
 
         serializer = DocumentRectificationStatusDetailSerializer(new_event)
+        return Response(data=serializer.data, status=201)
+
+
+class DocumentCorrectionCreateAPIView(APIView):
+    """
+    Endpoint administrativo para abertura de uma correção de preenchimento.
+
+    O administrador aponta os campos preenchidos incorretamente em um
+    pedido ainda aguardando análise, com um comentário por campo, para que
+    o cidadão corrija antes da decisão de aprovar/cancelar.
+
+    O documento é resolvido pelo PK. As regras de negócio (pedido
+    aguardando, sem correção/retificação em andamento, whitelist de
+    campos, anexos existentes) são validadas pelo
+    DocumentCorrectionCreateSerializer.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        document_id = request.data.get("document")
+
+        try:
+            document = DocumentRequest.objects.select_related("applicant").get(pk=document_id)
+        except (DocumentRequest.DoesNotExist, TypeError, ValueError):
+            return Response({"document": "Pedido não encontrado."}, status=404)
+
+        serializer = DocumentCorrectionCreateSerializer(
+            data=request.data,
+            context={"document": document},
+        )
+        serializer.is_valid(raise_exception=True)
+        correction = serializer.save()
+
+        response_serializer = DocumentCorrectionDetailSerializer(correction)
+        return Response(status=201, data=response_serializer.data)
+
+
+class DocumentCorrectionSubmitAPIView(APIView):
+    """
+    Endpoint público para o cidadão enviar as respostas de uma correção de
+    preenchimento pendente (multipart/form-data).
+
+    O documento é resolvido pelo protocolo (identificador público) e a
+    identidade é confirmada comparando o CPF informado com o cadastrado.
+    As regras (correção pendente, todos os campos respondidos, valores e
+    arquivos válidos) são validadas pelo DocumentCorrectionSubmitSerializer.
+    A resposta não expõe o CPF.
+    """
+    permission_classes = [AllowAny]
+    parser_classes = (MultiPartParser, FormParser)
+    throttle_classes = [DocumentCorrectionSubmitThrottle]
+
+    def post(self, request):
+        protocol = request.data.get("protocol")
+
+        try:
+            document = DocumentRequest.objects.select_related("applicant").get(protocol=protocol)
+        except (DocumentRequest.DoesNotExist, TypeError, ValueError):
+            return Response({"protocol": "Pedido não encontrado."}, status=404)
+
+        serializer = DocumentCorrectionSubmitSerializer(
+            data=request.data,
+            context={"document": document, "files": request.FILES},
+        )
+        serializer.is_valid(raise_exception=True)
+        correction = serializer.save()
+
+        response_serializer = DocumentCorrectionDetailSerializer(correction)
+        return Response(status=201, data=response_serializer.data)
+
+
+class DocumentCorrectionStatusCreateAPIView(APIView):
+    """
+    Registra uma mudança de status em uma correção de preenchimento
+    (uso administrativo — aprovar ou rejeitar).
+
+    Segue o mesmo padrão das demais views de status: busca o último status
+    e delega a transição a change_status(). Ao aprovar (só a partir de
+    "enviada"), os valores enviados são aplicados aos models de destino
+    ANTES de gravar o novo status — se a aplicação falhar, a transação é
+    revertida, a API retorna 400 e nada muda.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        correction_id = request.data.get("correction")
+        new_status = request.data.get("status")
+        comment = request.data.get("comment", "")
+
+        try:
+            correction = DocumentCorrection.objects.get(pk=correction_id)
+        except (DocumentCorrection.DoesNotExist, TypeError, ValueError):
+            return Response({"correction": "Correção não encontrada."}, status=404)
+
+        last_status = correction.status.order_by("-created_at").first()
+
+        if last_status is None:
+            return Response({"detail": "Correção sem status inicial."}, status=400)
+
+        if new_status == DocumentCorrectionStatus.StatusChoices.APROVADA:
+            allowed = last_status.ALLOWED_TRANSITIONS.get(last_status.status, set())
+            if new_status not in allowed:
+                return Response({
+                    "detail": f"Transição de '{last_status.status}' para '{new_status}' não é permitida."
+                }, status=400)
+
+        try:
+            with transaction.atomic():
+                if new_status == DocumentCorrectionStatus.StatusChoices.APROVADA:
+                    # Pode levantar ValidationError (DRF) → rollback + 400,
+                    # sem gravar o novo status.
+                    apply_document_correction(correction)
+
+                new_event = last_status.change_status(
+                    new_status=new_status,
+                    user=request.user,
+                    comment=comment,
+                )
+        except ValidationError as e:
+            message = e.message if hasattr(e, "message") else str(e)
+            return Response({"detail": message}, status=400)
+
+        serializer = DocumentCorrectionStatusDetailSerializer(new_event)
         return Response(data=serializer.data, status=201)

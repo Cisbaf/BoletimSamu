@@ -10,7 +10,9 @@ import BadgeDaysAwaiting from "./BadgeDaysAwaiting";
 import { daysWaiting } from "../../utils/dates";
 import { DocumentDetailProvider } from "../../context/DocumentDetail";
 import { DocumentShowDetail, type DocumentShowDetailType } from "./DocumentShowDetail";
-import { ApiBaseUrl } from "../../settings"
+import { ApiBaseUrl } from "../../settings";
+import { hasOpenCorrection } from "../../utils/timeline";
+import { STATUS_STYLE } from "../../utils/timeline";
 
 // ─── Loading skeleton ─────────────────────────────────────────────────────────
 
@@ -77,11 +79,45 @@ export default function PendingDocuments({ onChanged }: PendingDocumentsProps) {
         <DocumentTable
           documents={documents}
           showDetail={documentDetailRef.current?.showDocument}
-          renderExtraCols={["Tempo de Espera"]}
+          renderExtraCols={["Tempo de Espera", "Situação"]}
           renderRow={(item) => (
-            <Table.Cell px={4} py={4}>
-              <BadgeDaysAwaiting days={daysWaiting(item.createdAt)} />
-            </Table.Cell>
+            <>
+              <Table.Cell px={4} py={4}>
+                <BadgeDaysAwaiting days={daysWaiting(item.createdAt)} />
+              </Table.Cell>
+              <Table.Cell px={4} py={4}>
+                {/* Badge "Aguardando Correção" — exibido apenas se o payload
+                    da listagem trouxer corrections preenchido.
+                    Se o backend não expuser esse campo no serializer resumido,
+                    a checagem defensiva abaixo garante que nada quebre. */}
+                {Array.isArray(item.corrections) && hasOpenCorrection(item.corrections) && (
+                  <span style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "5px",
+                    padding: "3px 10px",
+                    background: STATUS_STYLE.pendente.badge,
+                    color: STATUS_STYLE.pendente.badgeColor,
+                    border: `1px solid ${STATUS_STYLE.pendente.badgeBorder}`,
+                    borderRadius: "9999px",
+                    fontSize: "11px",
+                    fontWeight: "600",
+                    whiteSpace: "nowrap",
+                    lineHeight: 1.5,
+                  }}>
+                    <span style={{
+                      width: "6px",
+                      height: "6px",
+                      borderRadius: "50%",
+                      background: STATUS_STYLE.pendente.badgeColor,
+                      flexShrink: 0,
+                      display: "inline-block",
+                    }} />
+                    Aguardando Correção
+                  </span>
+                )}
+              </Table.Cell>
+            </>
           )}
         />
       )}
