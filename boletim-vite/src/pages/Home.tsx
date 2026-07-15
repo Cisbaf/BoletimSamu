@@ -103,8 +103,7 @@ export default function HomePage() {
 
           <Text fontSize={["15px", "16.5px"]} color="rgba(255,255,255,0.85)" maxW="560px" mb={8} lineHeight={1.7}>
             Solicite online, gratuitamente, a cópia do boletim de ocorrência
-            registrado durante um atendimento de urgência do SAMU. Sem taxas,
-            sem burocracia — a retirada é feita pessoalmente, mediante
+            registrado durante um atendimento de urgência do SAMU. A retirada é feita pessoalmente, mediante
             assinatura de recibo.
           </Text>
 
