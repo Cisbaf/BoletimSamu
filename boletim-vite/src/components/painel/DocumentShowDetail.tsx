@@ -5,8 +5,10 @@ import DocumentDetailView from "./DocumentDetailView";
 import AttachmentCarousel from "./DocumentViewAnexs";
 import DocumentStatusTimeLine from "../DocumentStatusTimeLine";
 import { FcAnswers } from "react-icons/fc";
+import { FaRegFilePdf } from "react-icons/fa";
 import { useDocumentDetailContext } from "../../context/DocumentDetail";
 import DocumentResponse from "./DocumentResponse";
+import { exportRequestPdf } from "../../helpers/exportRequestPdf";
 
 
 export interface DocumentShowDetailType {
@@ -54,15 +56,22 @@ export const DocumentShowDetail = React.forwardRef<DocumentShowDetailType, Docum
             }>
             {(doc)=> (
                 <Flex direction="column" gap={5}>
-                    <Button
-                        position={"absolute"}
-                        right={10}
-                        maxWidth={100}
-                        onClick={(()=>setAnswersVisible(true))}
-                        variant={"subtle"}>
-                        <FcAnswers/>
-                        <Text>Novo Status</Text>
-                    </Button>
+                    <HStack position={"absolute"} right={10} gap={2}>
+                        <Button
+                            maxWidth={140}
+                            onClick={(()=>exportRequestPdf(doc))}
+                            variant={"outline"}>
+                            <FaRegFilePdf/>
+                            <Text>Exportar PDF</Text>
+                        </Button>
+                        <Button
+                            maxWidth={100}
+                            onClick={(()=>setAnswersVisible(true))}
+                            variant={"subtle"}>
+                            <FcAnswers/>
+                            <Text>Novo Status</Text>
+                        </Button>
+                    </HStack>
                     <DocumentDetailView data={doc} />
                     <DocumentStatusTimeLine status={doc.status} rectifications={doc.rectifications} corrections={doc.corrections}/>
                     <DocumentResponse
