@@ -64,6 +64,7 @@ export default function DocumentTable({
         <Table.Header>
           <Table.Row>
             <TH>Protocolo</TH>
+            <TH>Nome Paciente</TH>
             <TH>Nome Solicitante</TH>
             <TH>Solicitado em</TH>
             {renderExtraCols?.map((col, index) => (
@@ -97,6 +98,11 @@ export default function DocumentTable({
                   >
                     #{item.protocol}
                   </Box>
+                </Table.Cell>
+
+                {/* Paciente */}
+                <Table.Cell py={4} px={4} fontSize="13px" fontWeight="500" color="#374151">
+                  {item.patientName}
                 </Table.Cell>
 
                 {/* Solicitante */}

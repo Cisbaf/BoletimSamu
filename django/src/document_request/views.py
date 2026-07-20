@@ -196,7 +196,7 @@ class DocumentPublicViewSet(BaseDocumentRequestViewSet):
     def get_queryset(self):
         base = (
             DocumentRequest.objects
-            .select_related("applicant")
+            .select_related("applicant", "incident")
             .prefetch_related(
                 # Evita N+1 na listagem: o serializer embute o histórico de
                 # status do pedido, as retificações e as correções (com seus

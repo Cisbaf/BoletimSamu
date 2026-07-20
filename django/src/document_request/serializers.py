@@ -376,6 +376,7 @@ class DocumentCorrectionSubmitSerializer(serializers.Serializer):
 
 class DocumentSimpleDetailSerializer(serializers.ModelSerializer):
     applicant_name = serializers.SerializerMethodField()
+    patient_name = serializers.SerializerMethodField()
     status = DocumentStatusDetailSerializer(
         many=True,
         read_only=True
@@ -392,9 +393,13 @@ class DocumentSimpleDetailSerializer(serializers.ModelSerializer):
     def get_applicant_name(self, obj):
         return obj.applicant.full_name
 
+    def get_patient_name(self, obj):
+        incident = getattr(obj, "incident", None)
+        return incident.patient_name if incident else None
+
     class Meta:
         model = DocumentRequest
-        fields = ["id", "protocol", "applicant_name", "status", "rectifications", "corrections", "created_at"]
+        fields = ["id", "protocol", "applicant_name", "patient_name", "status", "rectifications", "corrections", "created_at"]
 
 
 class DocumentRequestDetailSerializer(serializers.ModelSerializer):

@@ -8,6 +8,7 @@ export interface DocumentSimpleDetail {
   rectifications: Rectification[];
   corrections: Correction[];
   applicantName: string;
+  patientName: string;
   createdAt: string;
   view?: boolean;
 }
