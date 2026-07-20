@@ -7,7 +7,7 @@ import {
 } from "@chakra-ui/react";
 import { useDocumentFormContext } from "../../context/DocumentFormContext";
 import { getRequiredDocuments } from "../../domain/required_documents";
-import { DOCUMENT_LABELS } from "../../domain/documentSchemaForm";
+import { DOCUMENT_LABELS, DOCUMENT_DESCRIPTIONS } from "../../domain/documentSchemaForm";
 import type { RequiredDocument } from "../../domain/documentSchemaForm";
 import React, { useRef, useState } from "react";
 
@@ -55,6 +55,7 @@ function formatSize(bytes: number): string {
 interface FileUploadFieldProps {
   docType: RequiredDocument;
   label: string;
+  description?: string;
   currentFile: File | undefined;
   error?: string;
   onSelect: (file: File) => void;
@@ -64,6 +65,7 @@ interface FileUploadFieldProps {
 
 function FileUploadField({
   label,
+  description,
   currentFile,
   error,
   onSelect,
@@ -84,9 +86,14 @@ function FileUploadField({
 
   return (
     <Field.Root invalid={!!error}>
-      <Field.Label fontWeight="600" fontSize="13px" color="#374151" mb={2}>
+      <Field.Label fontWeight="600" fontSize="13px" color="#374151" mb={description ? 1 : 2}>
         {label}
       </Field.Label>
+      {description && (
+        <Text fontSize="12px" color="#6B7280" mb={2}>
+          {description}
+        </Text>
+      )}
 
       {/* Zona de upload */}
       {!hasFile ? (
@@ -278,6 +285,7 @@ export default function AttachmentsForm() {
           key={docType}
           docType={docType}
           label={DOCUMENT_LABELS[docType]}
+          description={DOCUMENT_DESCRIPTIONS[docType]}
           currentFile={currentDocs?.[docType]}
           error={errors.documents?.[docType]?.message as string | undefined}
           resetKey={`${docType}-${relationship}-${purpose}`}

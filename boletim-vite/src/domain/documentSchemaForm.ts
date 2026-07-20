@@ -251,11 +251,21 @@ export const PURPOSE_LABELS: Record<(typeof PURPOSES)[number], string> = {
 
 export const DOCUMENT_LABELS: Record<(typeof DOCUMENT_TYPES)[number],
 string> = {
-  PATIENT_ID: "Documento Paciente",
-  APPLICANT_ID: "Documento Solicitante",
-  MARRIAGE_CERTIFICATE: "Certidão Casamento / União estável",
-  POWER_OF_ATTORNEY: "Procuração específica",
+  PATIENT_ID: "Documento de Identidade do Paciente",
+  APPLICANT_ID: "Documento de Identidade do Solicitante",
+  MARRIAGE_CERTIFICATE: "Certidão de Casamento ou União Estável",
+  POWER_OF_ATTORNEY: "Procuração",
   DEATH_CERTIFICATE: "Certidão de Óbito"
+};
+
+/** Explica o que deve ser enviado em cada campo, para reduzir uploads de arquivos incorretos. */
+export const DOCUMENT_DESCRIPTIONS: Record<(typeof DOCUMENT_TYPES)[number],
+string> = {
+  PATIENT_ID: "RG, CNH ou outro documento oficial com foto do paciente atendido pelo SAMU.",
+  APPLICANT_ID: "RG, CNH ou outro documento oficial com foto de quem está fazendo esta solicitação.",
+  MARRIAGE_CERTIFICATE: "Certidão que comprove o vínculo conjugal ou de união estável com o paciente.",
+  POWER_OF_ATTORNEY: "Procuração específica que autorize você a solicitar este documento em nome do paciente.",
+  DEATH_CERTIFICATE: "Certidão de óbito do paciente, obrigatória quando a finalidade é Óbito.",
 };
 
 export type RequiredDocument =
