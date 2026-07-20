@@ -9,11 +9,20 @@ import {
   Text,
 } from "@chakra-ui/react";
 import type { DocumentFile } from "../../domain/documentDetail";
-import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
+import { FaChevronLeft, FaChevronRight, FaDownload } from "react-icons/fa";
 import { DOCUMENT_LABELS } from "../../domain/documentSchemaForm";
 import { getFileType } from "../../utils/getFileType";
 import { getBlob } from "../../helpers/getBlob";
+import { downloadFile } from "../../helpers/downloadFile";
+import { useToast } from "../../hooks/useToast";
 import { FaEye } from "react-icons/fa";
+
+function getAttachmentFileName(file: DocumentFile) {
+  const label = DOCUMENT_LABELS[file.documentType] ?? "arquivo";
+  const extMatch = file.fileUrl.match(/\.[a-zA-Z0-9]+(?:\?.*)?$/);
+  const ext = extMatch ? extMatch[0].split("?")[0] : "";
+  return `${label}${ext}`;
+}
 
 // 🔹 ITEM (anexo individual)
 interface AttachmentItemProps {
@@ -138,8 +147,22 @@ interface AttachmentCarouselProps {
 export default function AttachmentCarousel({ files }: AttachmentCarouselProps) {
   const [currentIndex, setCurrentIndex] = React.useState(0);
   const [open, setOpen] = React.useState(false);
+  const [downloading, setDownloading] = React.useState(false);
+  const toast = useToast();
 
   if (!files || files.length === 0) return null;
+
+  const handleDownload = async () => {
+    const file = files[currentIndex];
+    setDownloading(true);
+    try {
+      await downloadFile(file.fileUrl, getAttachmentFileName(file));
+    } catch {
+      toast.error({ description: "Não foi possível baixar o anexo." });
+    } finally {
+      setDownloading(false);
+    }
+  };
 
   const handlePrev = () => {
     setCurrentIndex((prev) => (prev === 0 ? files.length - 1 : prev - 1));
@@ -193,6 +216,19 @@ export default function AttachmentCarousel({ files }: AttachmentCarouselProps) {
           <Dialog.Backdrop bg="" />
           <Dialog.Positioner>
             <Dialog.Content bg="black" maxW="90vw" maxH="90vh">
+              <IconButton
+                aria-label="Baixar anexo"
+                title="Baixar anexo"
+                position="absolute"
+                top={4}
+                right={16}
+                zIndex={10}
+                loading={downloading}
+                onClick={handleDownload}
+              >
+                <FaDownload />
+              </IconButton>
+
               <Dialog.CloseTrigger asChild>
                 <IconButton
                   aria-label="close"
