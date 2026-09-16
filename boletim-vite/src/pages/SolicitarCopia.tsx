@@ -4,6 +4,7 @@ import { DocumentFormProvider, useDocumentFormContext } from "../context/Documen
 import ApplicantForm from "../components/form/ApplicantForm";
 import IncidentForm from "../components/form/IncidentForm";
 import AttachmentsForm from "../components/form/AttachmentsForm";
+import TermsStep from "../components/form/TermsStep";
 import StepperForm from "../components/StepperForm";
 import { usePost } from "../hooks/usePost";
 import MakeFormData from "../helpers/makeFormData";
@@ -54,6 +55,8 @@ export default function SolicitarCopiaPage() {
 
 function StepForm() {
   const { form } = useDocumentFormContext();
+  const toaster = useToast();
+  const [termsAccepted, setTermsAccepted] = React.useState(false);
 
   return (
     <StepperRequestProvider>
@@ -61,6 +64,21 @@ function StepForm() {
         brandName="Solicitação de Cópia de Boletim"
         brandSubtitle="Samu"
         steps={[
+          {
+            title: "Termo de Aceite",
+            description: "Leia e concorde com os termos antes de continuar.",
+            stepLabel: "Termo",
+            component: <TermsStep accepted={termsAccepted} onChangeAccepted={setTermsAccepted}/>,
+            validate: () => {
+              if (!termsAccepted) {
+                toaster.error({
+                  title: "Termo não aceito",
+                  description: "Você precisa ler e aceitar o termo para continuar."
+                });
+              }
+              return termsAccepted;
+            }
+          },
           {
             title: "Dados do Solicitante",
             description: "Identifique quem está realizando esta solicitação.",
