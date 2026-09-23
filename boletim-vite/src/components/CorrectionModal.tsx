@@ -27,7 +27,10 @@ import {
   LOCATION_LABELS,
   ApplicantSchema,
   IncidentSchema,
+  IncidentDateSchema,
+  MIN_INCIDENT_DATE,
 } from "../domain/documentSchemaForm";
+import { todayISODate } from "../utils/dates";
 
 const MotionBox = motion(Box);
 
@@ -62,6 +65,14 @@ const TEXTAREA_FIELDS = new Set([
 /** Valida um valor textual usando o schema Zod correto para o campo. */
 function validateFieldValue(fieldKey: string, value: string): string | null {
   const [namespace, field] = fieldKey.split(".");
+
+  if (fieldKey === "incident.date") {
+    const result = IncidentDateSchema.safeParse(value);
+    if (!result.success) {
+      return result.error.issues[0]?.message ?? "Valor inválido";
+    }
+    return null;
+  }
 
   try {
     if (namespace === "applicant" && field) {
@@ -370,6 +381,8 @@ function FieldCard({
         <Box>
           <input
             type="date"
+            min={MIN_INCIDENT_DATE}
+            max={todayISODate()}
             value={textValue}
             onChange={(e) => onTextChange(e.target.value)}
             style={inputStyle}

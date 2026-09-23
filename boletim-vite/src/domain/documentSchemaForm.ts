@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { isValidCPF } from "./valid";
+import { todayISODate } from "../utils/dates";
 
 /* =========================
  * Constantes (UI + Schema)
@@ -109,8 +110,21 @@ export const ApplicantSchema = z
     }
   });
   
+/** Data mais antiga aceita para uma ocorrência.
+ *  Evita que a pessoa informe, por engano, a data de nascimento. */
+export const MIN_INCIDENT_DATE = "2010-01-01";
+
+/** Valida uma data "YYYY-MM-DD" contra os limites da ocorrência.
+ *  A comparação é feita como texto: o formato ISO já é ordenável. */
+export const IncidentDateSchema = z
+  .string()
+  .nonempty("Preencha uma data")
+  .regex(/^\d{4}-\d{2}-\d{2}$/, "Data inválida")
+  .refine((value) => value >= MIN_INCIDENT_DATE, "A data deve ser a partir de 01/01/2010")
+  .refine((value) => value <= todayISODate(), "A data não pode ser futura");
+
 export const IncidentSchema = z.object({
-  date: z.string().nonempty("Preencha uma data"),
+  date: IncidentDateSchema,
   time: z.string().nonempty("Preencha um horário"),
   patient_name: z.string().nonempty("Preencha o nome completo"),
   city: z.enum(CITIES, "Selecione um municipio valido"),

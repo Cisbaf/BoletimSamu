@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { DocumentSchema, ApplicantSchema } from "../../domain/documentSchemaForm";
+import { DocumentSchema, ApplicantSchema, IncidentDateSchema } from "../../domain/documentSchemaForm";
+import { todayISODate } from "../../utils/dates";
 
 describe("DocumentSchema", () => {
   it("deve validar um payload válido", () => {
@@ -208,5 +209,39 @@ describe("ApplicantSchema – validação condicional", () => {
     const result = ApplicantSchema.safeParse(validRepresentative);
 
     expect(result.success).toBe(true);
+  });
+});
+describe("IncidentDateSchema", () => {
+  function shiftDays(days: number): string {
+    const date = new Date();
+    date.setDate(date.getDate() + days);
+
+    return date.toISOString().slice(0, 10);
+  }
+
+  it("deve aceitar a data de hoje", () => {
+    const result = IncidentDateSchema.safeParse(todayISODate());
+
+    expect(result.success).toBe(true);
+  });
+
+  it("deve aceitar uma data dentro do limite", () => {
+    const result = IncidentDateSchema.safeParse("2010-01-01");
+
+    expect(result.success).toBe(true);
+  });
+
+  it("deve falhar com data anterior a 2010 (ex: data de nascimento)", () => {
+    const result = IncidentDateSchema.safeParse("1985-04-02");
+
+    expect(result.success).toBe(false);
+    expect(result.error?.issues[0]?.message).toBe("A data deve ser a partir de 01/01/2010");
+  });
+
+  it("deve falhar com data futura", () => {
+    const result = IncidentDateSchema.safeParse(shiftDays(1));
+
+    expect(result.success).toBe(false);
+    expect(result.error?.issues[0]?.message).toBe("A data não pode ser futura");
   });
 });

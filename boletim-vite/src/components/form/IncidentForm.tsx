@@ -14,9 +14,11 @@ import {
   ATTENDANCE_LOCATIONS,
   CITIES,
   LOCATION_LABELS,
+  MIN_INCIDENT_DATE,
   PURPOSE_LABELS,
   PURPOSES,
 } from "../../domain/documentSchemaForm";
+import { todayISODate } from "../../utils/dates";
 import { Controller } from "react-hook-form";
 
 // ─── Radio pill reutilizável ─────────────────────────────────────────────────
@@ -95,7 +97,12 @@ export default function IncidentForm() {
 
         <Field.Root invalid={!!errors.incident?.date}>
           <Field.Label {...LABEL_STYLE}>Data da ocorrência *</Field.Label>
-          <Input type="date" {...register("incident.date")} />
+          <Input
+            type="date"
+            min={MIN_INCIDENT_DATE}
+            max={todayISODate()}
+            {...register("incident.date")}
+          />
           <Field.ErrorText>{errors.incident?.date?.message}</Field.ErrorText>
         </Field.Root>
 

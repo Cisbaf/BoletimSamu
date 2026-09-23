@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import type { DocumentDetail } from "../../domain/documentDetail";
 import BadgeStatusDetail from "./BadgeStatusDetail";
 import BadgeDaysAwaiting from "./BadgeDaysAwaiting";
-import { daysWaiting } from "../../utils/dates";
+import { daysWaiting, formatToBRDateOnly } from "../../utils/dates";
 import { APPLICANT_TYPE_LABELS, RELATIONSHIP_DEGREE_LABELS } from "../../domain/documentSchemaForm";
 import { getOpenRectification, STATUS_LABEL } from "../../utils/timeline";
 
@@ -158,7 +158,7 @@ export default function DocumentDetailView({ data }: Props) {
           <GridItem>
             <Flex direction="column" gap={3}>
               <LV label="Nome do Paciente" value={data.incident.patientName} />
-              <LV label="Data da Ocorrência" value={data.incident.date} />
+              <LV label="Data da Ocorrência" value={formatToBRDateOnly(data.incident.date)} />
               <LV label="Hora da Ocorrência" value={data.incident.time} />
             </Flex>
           </GridItem>

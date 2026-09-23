@@ -1,7 +1,14 @@
+from datetime import date as date_type
+
 from django.db import models
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django.core.exceptions import ValidationError
 from document_request.models import DocumentRequest
+
+# Data mais antiga aceita para uma ocorrência. Evita que o solicitante
+# informe, por engano, a data de nascimento do paciente.
+MIN_INCIDENT_DATE = date_type(2010, 1, 1)
 
 
 class Incident(models.Model):
@@ -13,6 +20,7 @@ class Incident(models.Model):
 
     Regras de negócio:
     - Se o local de atendimento for "Outro", a descrição do local é obrigatória
+    - A data da ocorrência deve estar entre 01/01/2010 e o dia atual
 
     Cada ocorrência está vinculada a uma única solicitação de documento.
     """
@@ -145,13 +153,24 @@ class Incident(models.Model):
     # REGRA DE NEGÓCIO
     # =========================
     def clean(self):
+        errors = {}
+
         if (
             self.attendance_location == self.AttendanceLocation.OTHER
             and not self.other_location_description
         ):
-            raise ValidationError({
-                "other_location_description": _("Informe o local quando 'Outro' for selecionado.")
-            })
+            errors["other_location_description"] = _(
+                "Informe o local quando 'Outro' for selecionado."
+            )
+
+        if self.date:
+            if self.date < MIN_INCIDENT_DATE:
+                errors["date"] = _("A data da ocorrência deve ser a partir de 01/01/2010.")
+            elif self.date > timezone.localdate():
+                errors["date"] = _("A data da ocorrência não pode ser futura.")
+
+        if errors:
+            raise ValidationError(errors)
 
     class Meta:
         db_table = "ocorrencia"

@@ -4,6 +4,7 @@ import {
   APPLICANT_TYPE_LABELS,
   RELATIONSHIP_DEGREE_LABELS,
 } from "../domain/documentSchemaForm";
+import { formatToBRDateOnly } from "../utils/dates";
 
 const PAGE_WIDTH = 210;
 const PAGE_HEIGHT = 297;
@@ -168,7 +169,7 @@ export function exportRequestPdf(data: DocumentDetail) {
     y,
     [
       { label: "Nome do Paciente", value: data.incident.patientName },
-      { label: "Data da Ocorrência", value: data.incident.date },
+      { label: "Data da Ocorrência", value: formatToBRDateOnly(data.incident.date) },
       { label: "Hora da Ocorrência", value: data.incident.time },
     ],
     [
