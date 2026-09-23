@@ -60,6 +60,7 @@ SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 # Application definition
 REST_FRAMEWORK = {
+    'EXCEPTION_HANDLER': 'app.exception_handler.api_exception_handler',
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework.authentication.BasicAuthentication',
         'rest_framework.authentication.SessionAuthentication',
@@ -186,3 +187,40 @@ MEDIA_URL = os.getenv("MEDIA_URL", "media/" if DEBUG else "https://atendimentocr
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+# Logging
+# Sem esta configuração, com DEBUG=False o Django só envia tracebacks de 500
+# para o handler "mail_admins" (que não está configurado) — ou seja, erros de
+# produção não deixavam rastro algum no log do container. Aqui jogamos tudo
+# para o stdout, que é onde "docker compose logs application" lê.
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "verbose": {
+            "format": "[{asctime}] {levelname} {name}: {message}",
+            "style": "{",
+        },
+    },
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "verbose",
+        },
+    },
+    "loggers": {
+        "django.request": {
+            "handlers": ["console"],
+            "level": "ERROR",
+            "propagate": False,
+        },
+        "boletim": {
+            "handlers": ["console"],
+            "level": "INFO",
+            "propagate": False,
+        },
+    },
+}
+

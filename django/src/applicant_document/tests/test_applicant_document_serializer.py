@@ -6,7 +6,8 @@ import shutil
 
 from applicant.models import Applicant
 from applicant_document.models import DocumentType
-from applicant_document.serializers import ApplicantDocumentRequestSerializer
+from applicant_document.serializers import ApplicantDocumentRequestSerializer, _validate_upload
+from rest_framework.exceptions import ValidationError as DRFValidationError
 from document_request.models import DocumentRequest
 
 # Purpose padrão usada nos testes que não testam a finalidade em si
@@ -375,3 +376,59 @@ class ApplicantDocumentRequestSerializerTest(TestCase):
         )
         self.assertFalse(serializer.is_valid())
         self.assertIn("não corresponde", str(serializer.errors))
+
+    def test_pdf_wrong_magic_bytes(self):
+        """PDF cujo conteúdo não tem o cabeçalho %PDF deve ser rejeitado."""
+        data = {
+            "files": [SimpleUploadedFile("doc.pdf", b"MZ\x00\x00fake", content_type="application/pdf")],
+            "types": [DocumentType.PATIENT_ID],
+        }
+        serializer = ApplicantDocumentRequestSerializer(
+            data=data,
+            context={"applicant_type": Applicant.ApplicantType.PATIENT, "purpose": _PURPOSE}
+        )
+        self.assertFalse(serializer.is_valid())
+        self.assertIn("não corresponde", str(serializer.errors))
+
+    def test_pdf_with_bytes_before_header(self):
+        """
+        PDF com BOM/lixo antes do "%PDF" abre normalmente em qualquer leitor,
+        então também precisa ser aceito aqui.
+        """
+        content = b"\xef\xbb\xbf\n" + _MAGIC[".pdf"]
+        data = {
+            "files": [SimpleUploadedFile("doc.pdf", content, content_type="application/pdf")],
+            "types": [DocumentType.PATIENT_ID],
+        }
+        serializer = ApplicantDocumentRequestSerializer(
+            data=data,
+            context={"applicant_type": Applicant.ApplicantType.PATIENT, "purpose": _PURPOSE}
+        )
+        self.assertTrue(serializer.is_valid(), serializer.errors)
+
+    def test_empty_file(self):
+        """
+        Arquivo vazio tem mensagem própria explicando a causa mais comum
+        (anexo escolhido direto de um app de nuvem, sem estar baixado).
+        Testado direto no validador porque o FileField do DRF já barra
+        arquivos vazios antes de chegar no validate() do serializer.
+        """
+        empty = SimpleUploadedFile("doc.pdf", b"", content_type="application/pdf")
+
+        with self.assertRaises(DRFValidationError) as ctx:
+            _validate_upload(empty)
+
+        self.assertIn("vazio", str(ctx.exception))
+
+    def test_file_without_extension(self):
+        """Arquivo sem extensão tem mensagem própria."""
+        data = {
+            "files": [SimpleUploadedFile("documento", _MAGIC[".pdf"], content_type="application/pdf")],
+            "types": [DocumentType.PATIENT_ID],
+        }
+        serializer = ApplicantDocumentRequestSerializer(
+            data=data,
+            context={"applicant_type": Applicant.ApplicantType.PATIENT, "purpose": _PURPOSE}
+        )
+        self.assertFalse(serializer.is_valid())
+        self.assertIn("sem extensão", str(serializer.errors))

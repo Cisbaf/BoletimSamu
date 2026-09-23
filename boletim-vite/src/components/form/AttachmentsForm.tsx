@@ -9,6 +9,7 @@ import { useDocumentFormContext } from "../../context/DocumentFormContext";
 import { getRequiredDocuments } from "../../domain/required_documents";
 import { DOCUMENT_LABELS, DOCUMENT_DESCRIPTIONS } from "../../domain/documentSchemaForm";
 import type { RequiredDocument } from "../../domain/documentSchemaForm";
+import { UPLOAD_HINT, formatSize, prepareUploadFile } from "../../domain/fileUpload";
 import React, { useRef, useState } from "react";
 
 // ─── Ícone de upload ─────────────────────────────────────────────────────────
@@ -40,14 +41,6 @@ function FileIcon() {
       <path d="M14 2v6h6" stroke="#2563EB" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
-}
-
-// ─── Formata tamanho de arquivo ───────────────────────────────────────────────
-
-function formatSize(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
 // ─── Componente de upload por campo ──────────────────────────────────────────
@@ -150,7 +143,7 @@ function FileUploadField({
           </Box>
 
           <Text fontSize="11px" color="#94A3B8" mt={3}>
-            PDF, JPG, PNG · Máx. 5MB
+            {UPLOAD_HINT}
           </Text>
         </Box>
       ) : (
@@ -231,7 +224,7 @@ function FileUploadField({
 
 export default function AttachmentsForm() {
   const { form } = useDocumentFormContext();
-  const { watch, setValue, formState: { errors } } = form;
+  const { watch, setValue, setError, clearErrors, formState: { errors } } = form;
 
   const applicantType = watch("applicant.applicant_type");
   const relationship  = watch("applicant.relationship_degree");
@@ -239,6 +232,22 @@ export default function AttachmentsForm() {
   const currentDocs   = watch("documents");
 
   const requiredDocs = getRequiredDocuments(applicantType, relationship, purpose);
+
+  // Valida e carrega o arquivo na memória assim que ele é escolhido: o usuário
+  // vê o motivo na hora, em vez de descobrir só depois de enviar o formulário
+  // inteiro — e o envio deixa de depender do app que forneceu o arquivo.
+  const handleSelect = async (docType: RequiredDocument, file: File) => {
+    const { error, file: prepared } = await prepareUploadFile(file);
+
+    if (error) {
+      setValue(`documents.${docType}` as any, undefined);
+      setError(`documents.${docType}` as any, { type: "manual", message: error });
+      return;
+    }
+
+    clearErrors(`documents.${docType}` as any);
+    setValue(`documents.${docType}` as any, prepared, { shouldValidate: true });
+  };
 
   const previousRelationship = React.useRef(relationship);
   const previousPurpose      = React.useRef(purpose);
@@ -289,9 +298,7 @@ export default function AttachmentsForm() {
           currentFile={currentDocs?.[docType]}
           error={errors.documents?.[docType]?.message as string | undefined}
           resetKey={`${docType}-${relationship}-${purpose}`}
-          onSelect={(file) => {
-            setValue(`documents.${docType}` as any, file, { shouldValidate: true });
-          }}
+          onSelect={(file) => handleSelect(docType, file)}
           onRemove={() => {
             setValue(`documents.${docType}` as any, undefined, { shouldValidate: true });
           }}

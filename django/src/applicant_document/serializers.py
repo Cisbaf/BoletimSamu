@@ -16,23 +16,85 @@ _MAGIC_BYTES = {
     ".jpeg": b"\xff\xd8\xff",
     ".png":  b"\x89PNG",
 }
+_KIND_BY_EXTENSION = {
+    ".pdf":  "PDF",
+    ".jpg":  "imagem JPG",
+    ".jpeg": "imagem JPG",
+    ".png":  "imagem PNG",
+}
+
+
+# Leitores de PDF aceitam o cabeçalho "%PDF" em qualquer ponto dos primeiros
+# 1024 bytes (alguns geradores deixam BOM ou lixo antes dele). Exigir o header
+# no offset 0 rejeitava PDFs que abrem normalmente no celular, então a busca
+# segue a mesma tolerância dos leitores. Para imagens a assinatura é exata.
+_HEADER_READ_SIZE = 1024
+
+
+def _has_valid_signature(ext, header):
+    magic = _MAGIC_BYTES[ext]
+    if ext == ".pdf":
+        return magic in header
+    return header.startswith(magic)
+
+
+def _format_size(size):
+    if size < 1024:
+        return f"{size} B"
+    if size < 1024 * 1024:
+        return f"{size / 1024:.0f} KB"
+    return f"{size / (1024 * 1024):.1f} MB"
 
 
 def _validate_upload(f):
-    ext = os.path.splitext(f.name)[1].lower()
+    """
+    Valida um arquivo enviado: extensão, tamanho e assinatura do conteúdo.
+
+    As mensagens são escritas para o cidadão que está preenchendo o
+    formulário: além de dizer o que está errado, indicam o que ele pode
+    fazer (reexportar o PDF, tirar uma foto do documento, etc.).
+    """
+    name = f.name or "arquivo"
+    ext = os.path.splitext(name)[1].lower()
+
+    if not ext:
+        raise ValidationError(
+            f"O arquivo '{name}' está sem extensão, então não é possível "
+            "identificar o tipo. Renomeie para .pdf, .jpg ou .png, ou envie uma foto do documento."
+        )
+
     if ext not in _ALLOWED_EXTENSIONS:
         raise ValidationError(
-            f"Tipo de arquivo não permitido: '{f.name}'. Envie PDF, JPG ou PNG."
+            f"Tipo de arquivo não permitido: '{name}' ({ext}). Envie PDF, JPG ou PNG."
         )
+
+    if f.size == 0:
+        raise ValidationError(
+            f"O arquivo '{name}' chegou vazio (0 bytes). Isso costuma acontecer quando o "
+            "arquivo é escolhido direto de um app de nuvem (Google Drive, iCloud, WhatsApp). "
+            "Baixe o arquivo para o celular antes de anexar, ou envie uma foto do documento."
+        )
+
     if f.size > _MAX_FILE_SIZE:
         raise ValidationError(
-            f"Arquivo '{f.name}' excede o tamanho máximo de 10 MB."
+            f"Arquivo '{name}' tem {_format_size(f.size)} e excede o tamanho máximo de 10 MB."
         )
-    header = f.read(8)
-    f.seek(0)
-    if not header.startswith(_MAGIC_BYTES[ext]):
+
+    try:
+        header = f.read(_HEADER_READ_SIZE)
+        f.seek(0)
+    except OSError:
         raise ValidationError(
-            f"O conteúdo de '{f.name}' não corresponde ao tipo declarado ({ext})."
+            f"Não foi possível ler o arquivo '{name}'. Tente anexá-lo novamente ou envie uma foto do documento."
+        )
+
+    if not _has_valid_signature(ext, header):
+        kind = _KIND_BY_EXTENSION[ext]
+        raise ValidationError(
+            f"O conteúdo de '{name}' não corresponde ao tipo declarado ({ext}): "
+            f"o arquivo não começa como um {kind} válido. Ele pode estar corrompido, "
+            "protegido por senha ou ter sido apenas renomeado. Abra o arquivo, salve/exporte "
+            "novamente como PDF ou envie uma foto do documento."
         )
 
 

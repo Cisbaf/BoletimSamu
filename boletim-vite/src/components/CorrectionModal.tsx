@@ -12,6 +12,7 @@ import { motion } from "framer-motion";
 import { usePost } from "../hooks/usePost";
 import { useToast } from "../hooks/useToast";
 import { parseDjangoError } from "../helpers/parseErrors";
+import { UPLOAD_HINT, formatSize, prepareUploadFile } from "../domain/fileUpload";
 import { isValidCPF } from "../domain/valid";
 import { ApiBaseUrl } from "../settings";
 import {
@@ -119,12 +120,6 @@ function FileIcon() {
   );
 }
 
-function formatSize(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-}
-
 interface FileUploadFieldInlineProps {
   file: File | null;
   error?: string | null;
@@ -182,7 +177,7 @@ function FileUploadFieldInline({ file, error, onSelect, onRemove }: FileUploadFi
             ou clique para selecionar
           </Text>
           <Text fontSize="11px" color="#9CA3AF" mt={2}>
-            PDF, JPG, PNG · Máx. 5 MB
+            {UPLOAD_HINT}
           </Text>
         </Box>
       ) : (
@@ -588,8 +583,16 @@ export default function CorrectionModal({
     setFieldErrors((prev) => ({ ...prev, [fieldKey]: null }));
   }
 
-  function handleFileSelect(fieldKey: string, file: File) {
-    setFileValues((prev) => ({ ...prev, [fieldKey]: file }));
+  async function handleFileSelect(fieldKey: string, file: File) {
+    const { error, file: prepared } = await prepareUploadFile(file);
+
+    if (error) {
+      setFileValues((prev) => ({ ...prev, [fieldKey]: null }));
+      setFieldErrors((prev) => ({ ...prev, [fieldKey]: error }));
+      return;
+    }
+
+    setFileValues((prev) => ({ ...prev, [fieldKey]: prepared }));
     setFieldErrors((prev) => ({ ...prev, [fieldKey]: null }));
   }
 
