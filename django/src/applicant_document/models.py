@@ -21,6 +21,7 @@ class DocumentType(models.TextChoices):
     MARRIAGE_CERTIFICATE = "MARRIAGE_CERTIFICATE", "Certidão de casamento / União estável"
     POWER_OF_ATTORNEY = "POWER_OF_ATTORNEY", "Procuração específica"
     DEATH_CERTIFICATE = "DEATH_CERTIFICATE", "Certidão de Óbito"
+    KINSHIP_PROOF = "KINSHIP_PROOF", "Comprovante de Parentesco"
 
 class ApplicantDocument(models.Model):
     applicant = models.ForeignKey(

@@ -126,6 +126,7 @@ export const CORRECTION_FIELD_CATALOG: CorrectionFieldCategory[] = [
       { key: "attachment.MARRIAGE_CERTIFICATE",label: "Certidão de casamento / União estável",    kind: "file" },
       { key: "attachment.POWER_OF_ATTORNEY",   label: "Procuração específica",                    kind: "file" },
       { key: "attachment.DEATH_CERTIFICATE",   label: "Certidão de Óbito",                        kind: "file" },
+      { key: "attachment.KINSHIP_PROOF",       label: "Comprovante de Parentesco",                kind: "file" },
     ],
   },
 ];

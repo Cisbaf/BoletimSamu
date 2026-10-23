@@ -38,30 +38,10 @@ export default function CorrectionRequestModal({
   const [fieldStates, setFieldStates] = React.useState<Record<string, FieldState>>({});
   const [submitting, setSubmitting] = React.useState(false);
 
-  // Conjunto de document_types presentes nos anexos do pedido
-  const attachmentTypes = React.useMemo(
-    () => new Set(document.documents.map((d) => d.documentType)),
-    [document.documents]
-  );
-
-  // Catálogo filtrado: na categoria "Documentos Anexados", exibir só os tipos
-  // que realmente existem nos anexos do pedido atual.
-  const filteredCatalog = React.useMemo(
-    () =>
-      CORRECTION_FIELD_CATALOG.map((cat) => {
-        if (cat.category === "Documentos Anexados") {
-          return {
-            ...cat,
-            fields: cat.fields.filter((f) => {
-              const docType = f.key.replace("attachment.", "");
-              return attachmentTypes.has(docType as any);
-            }),
-          };
-        }
-        return cat;
-      }).filter((cat) => cat.fields.length > 0),
-    [attachmentTypes]
-  );
+  // Todos os tipos de anexo do catálogo podem ser solicitados, mesmo que o
+  // pedido ainda não tenha um arquivo daquele tipo (ex.: comprovante de
+  // parentesco nunca enviado) — o cidadão responde enviando o arquivo.
+  const filteredCatalog = CORRECTION_FIELD_CATALOG;
 
   const handleCheck = (key: string, checked: boolean) => {
     setFieldStates((prev) => ({
