@@ -214,16 +214,20 @@ class DocumentCorrectionCreateAPITest(APITestCase):
         self.assertEqual(response.status_code, 400)
         self.assertEqual(DocumentCorrection.objects.count(), 0)
 
-    def test_attachment_inexistente_no_pedido_retorna_400(self):
+    def test_attachment_inexistente_no_pedido_pode_ser_solicitado(self):
+        """
+        Um anexo que o pedido ainda não possui (ex.: comprovante de
+        parentesco nunca enviado) pode ser apontado na correção — o
+        cidadão responde enviando o arquivo pela primeira vez.
+        """
         doc = make_document()  # sem anexos
 
         response = self._post(doc.id, [
-            {"field_key": "attachment.PATIENT_ID", "comment": "Documento ilegível"},
+            {"field_key": "attachment.KINSHIP_PROOF", "comment": "Envie o comprovante de parentesco"},
         ])
 
-        self.assertEqual(response.status_code, 400)
-        self.assertIn("fields", response.data)
-        self.assertEqual(DocumentCorrection.objects.count(), 0)
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(DocumentCorrection.objects.count(), 1)
 
     def test_pedido_inexistente_retorna_404(self):
         response = self._post(99999, [

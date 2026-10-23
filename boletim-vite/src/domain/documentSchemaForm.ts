@@ -54,6 +54,7 @@ export const DOCUMENT_TYPES = [
   "MARRIAGE_CERTIFICATE",
   "POWER_OF_ATTORNEY",
   "DEATH_CERTIFICATE",
+  "KINSHIP_PROOF",
 ] as const;
 
 export const ApplicantSchema = z
@@ -269,7 +270,8 @@ string> = {
   APPLICANT_ID: "Documento de Identidade do Solicitante",
   MARRIAGE_CERTIFICATE: "Certidão de Casamento ou União Estável",
   POWER_OF_ATTORNEY: "Procuração",
-  DEATH_CERTIFICATE: "Certidão de Óbito"
+  DEATH_CERTIFICATE: "Certidão de Óbito",
+  KINSHIP_PROOF: "Comprovante de Parentesco",
 };
 
 /** Explica o que deve ser enviado em cada campo, para reduzir uploads de arquivos incorretos. */
@@ -280,6 +282,7 @@ string> = {
   MARRIAGE_CERTIFICATE: "Certidão que comprove o vínculo conjugal ou de união estável com o paciente.",
   POWER_OF_ATTORNEY: "Procuração específica que autorize você a solicitar este documento em nome do paciente.",
   DEATH_CERTIFICATE: "Certidão de óbito do paciente, obrigatória quando a finalidade é Óbito.",
+  KINSHIP_PROOF: "Documento que comprove o vínculo de parentesco com o paciente (ex.: certidão de nascimento).",
 };
 
 export type RequiredDocument =

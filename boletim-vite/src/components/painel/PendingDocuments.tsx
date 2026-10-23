@@ -11,8 +11,26 @@ import { daysWaiting } from "../../utils/dates";
 import { DocumentDetailProvider } from "../../context/DocumentDetail";
 import { DocumentShowDetail, type DocumentShowDetailType } from "./DocumentShowDetail";
 import { ApiBaseUrl } from "../../settings";
-import { hasOpenCorrection } from "../../utils/timeline";
-import { STATUS_STYLE } from "../../utils/timeline";
+import { getOpenCorrection, STATUS_STYLE } from "../../utils/timeline";
+import type { Correction } from "../../domain/documentCorrection";
+
+/**
+ * Badge de situação da correção em andamento (se houver). Diferencia
+ * "pendente" (aguardando o cidadão) de "enviada" (cidadão já respondeu,
+ * aguardando revisão do admin) — antes os dois caíam no mesmo texto
+ * "Aguardando Correção", fazendo o admin achar que nada tinha mudado.
+ */
+function correctionBadgeInfo(corrections?: Correction[]) {
+  if (!Array.isArray(corrections)) return null;
+  const open = getOpenCorrection(corrections);
+  if (!open) return null;
+
+  const lastStatus = open.status[open.status.length - 1]?.status;
+  if (lastStatus === "enviada") {
+    return { label: "Resposta Recebida", style: STATUS_STYLE.enviada };
+  }
+  return { label: "Aguardando Correção", style: STATUS_STYLE.pendente };
+}
 
 // ─── Loading skeleton ─────────────────────────────────────────────────────────
 
@@ -86,36 +104,41 @@ export default function PendingDocuments({ onChanged }: PendingDocumentsProps) {
                 <BadgeDaysAwaiting days={daysWaiting(item.createdAt)} />
               </Table.Cell>
               <Table.Cell px={4} py={4}>
-                {/* Badge "Aguardando Correção" — exibido apenas se o payload
+                {/* Badge de situação da correção — exibido apenas se o payload
                     da listagem trouxer corrections preenchido.
                     Se o backend não expuser esse campo no serializer resumido,
-                    a checagem defensiva abaixo garante que nada quebre. */}
-                {Array.isArray(item.corrections) && hasOpenCorrection(item.corrections) && (
-                  <span style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "5px",
-                    padding: "3px 10px",
-                    background: STATUS_STYLE.pendente.badge,
-                    color: STATUS_STYLE.pendente.badgeColor,
-                    border: `1px solid ${STATUS_STYLE.pendente.badgeBorder}`,
-                    borderRadius: "9999px",
-                    fontSize: "11px",
-                    fontWeight: "600",
-                    whiteSpace: "nowrap",
-                    lineHeight: 1.5,
-                  }}>
+                    a checagem defensiva dentro de correctionBadgeInfo garante
+                    que nada quebre. */}
+                {(() => {
+                  const badge = correctionBadgeInfo(item.corrections);
+                  if (!badge) return null;
+                  return (
                     <span style={{
-                      width: "6px",
-                      height: "6px",
-                      borderRadius: "50%",
-                      background: STATUS_STYLE.pendente.badgeColor,
-                      flexShrink: 0,
-                      display: "inline-block",
-                    }} />
-                    Aguardando Correção
-                  </span>
-                )}
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "5px",
+                      padding: "3px 10px",
+                      background: badge.style.badge,
+                      color: badge.style.badgeColor,
+                      border: `1px solid ${badge.style.badgeBorder}`,
+                      borderRadius: "9999px",
+                      fontSize: "11px",
+                      fontWeight: "600",
+                      whiteSpace: "nowrap",
+                      lineHeight: 1.5,
+                    }}>
+                      <span style={{
+                        width: "6px",
+                        height: "6px",
+                        borderRadius: "50%",
+                        background: badge.style.badgeColor,
+                        flexShrink: 0,
+                        display: "inline-block",
+                      }} />
+                      {badge.label}
+                    </span>
+                  );
+                })()}
               </Table.Cell>
             </>
           )}

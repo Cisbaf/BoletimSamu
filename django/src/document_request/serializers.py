@@ -177,7 +177,9 @@ class DocumentCorrectionCreateSerializer(serializers.Serializer):
     - o pedido precisa estar com o último status "aguardando"
     - não pode haver outra correção nem retificação em andamento
     - pelo menos um campo apontado, sem field_key duplicado
-    - campos attachment.<TYPE> só se existir anexo daquele tipo no pedido
+    - campos attachment.<TYPE> podem ser apontados mesmo que o pedido ainda
+      não tenha um anexo daquele tipo (ex.: documento nunca enviado), desde
+      que o tipo esteja na whitelist de CorrectionFieldKey
     """
     fields = CorrectionFieldInputSerializer(many=True, allow_empty=False)
 
@@ -205,19 +207,6 @@ class DocumentCorrectionCreateSerializer(serializers.Serializer):
             raise serializers.ValidationError({
                 "fields": "Campos duplicados na correção."
             })
-
-        applicant = getattr(document, "applicant", None)
-        for field_key in field_keys:
-            model_key, type_name = split_correction_field_key(field_key)
-            if model_key != "attachment":
-                continue
-            has_attachment = applicant is not None and ApplicantDocument.objects.filter(
-                applicant=applicant, document_type=type_name
-            ).exists()
-            if not has_attachment:
-                raise serializers.ValidationError({
-                    "fields": f"O pedido não possui anexo do tipo '{type_name}'."
-                })
 
         return data
 

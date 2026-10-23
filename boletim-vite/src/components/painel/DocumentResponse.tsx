@@ -162,6 +162,28 @@ export default function DocumentResponse({ isOpen, onOpenChange }: DocumentRespo
                         ou cancele a solicitação de correção abaixo.
                       </Text>
 
+                      {/* Campos apontados nesta correção — para o admin não
+                          precisar ir na página pública só para lembrar o que
+                          ele mesmo pediu. */}
+                      <Flex direction="column" gap={2} mb={4}>
+                        {openCorrection.fields.map((field) => (
+                          <Box
+                            key={field.id}
+                            p={3}
+                            bg="white"
+                            border="1px solid #FED7AA"
+                            borderRadius="8px"
+                          >
+                            <Text fontSize="12px" fontWeight="700" color="#111827" mb={1}>
+                              {field.fieldLabel}
+                            </Text>
+                            <Text fontSize="12px" color="#7C2D12" lineHeight={1.5}>
+                              {field.adminComment}
+                            </Text>
+                          </Box>
+                        ))}
+                      </Flex>
+
                       {!cancelConfirm ? (
                         <Box
                           role="button"

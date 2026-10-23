@@ -25,3 +25,4 @@ class CorrectionFieldKey(models.TextChoices):
     ATTACHMENT_MARRIAGE_CERTIFICATE = "attachment.MARRIAGE_CERTIFICATE", "Certidão de casamento / União estável"
     ATTACHMENT_POWER_OF_ATTORNEY = "attachment.POWER_OF_ATTORNEY", "Procuração específica"
     ATTACHMENT_DEATH_CERTIFICATE = "attachment.DEATH_CERTIFICATE", "Certidão de Óbito"
+    ATTACHMENT_KINSHIP_PROOF = "attachment.KINSHIP_PROOF", "Comprovante de Parentesco"

@@ -34,6 +34,16 @@ export default function DocumentStatusDetail({ data, onRectificationCreated }: D
   const openCorrection = getOpenCorrection(data.corrections ?? []);
   const correctionLastStatus = openCorrection?.status?.[openCorrection.status.length - 1]?.status;
 
+  // Correção mais recente (independente de estar aberta ou já finalizada) —
+  // usada para explicar ao cidadão o desfecho de uma correção já respondida
+  // (aprovada/rejeitada), já que esses estados não têm CTA próprio.
+  const latestCorrection = [...(data.corrections ?? [])].sort(
+    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+  )[0];
+  const latestCorrectionStatus = latestCorrection
+    ? latestCorrection.status[latestCorrection.status.length - 1]?.status
+    : undefined;
+
   return (
     <Box
       bg="white"
@@ -190,24 +200,83 @@ export default function DocumentStatusDetail({ data, onRectificationCreated }: D
 
           {/* Indicador passivo — enviada (em análise) */}
           {openCorrection && correctionLastStatus === "enviada" && (
-            <Box
-              display="inline-flex"
-              alignItems="center"
-              gap={2}
-              px={4}
-              py="9px"
-              bg="#ECFEFF"
-              color="#0E7490"
-              border="1px solid #A5F3FC"
-              borderRadius="10px"
-              fontSize="13px"
-              fontWeight="700"
-            >
-              <svg width="14" height="14" fill="none" viewBox="0 0 24 24">
-                <circle cx="12" cy="12" r="9" stroke="#0E7490" strokeWidth="1.8" />
-                <path d="M12 7v5l3 3" stroke="#0E7490" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-              Correção em análise
+            <Box>
+              <Box
+                display="inline-flex"
+                alignItems="center"
+                gap={2}
+                px={4}
+                py="9px"
+                bg="#ECFEFF"
+                color="#0E7490"
+                border="1px solid #A5F3FC"
+                borderRadius="10px"
+                fontSize="13px"
+                fontWeight="700"
+              >
+                <svg width="14" height="14" fill="none" viewBox="0 0 24 24">
+                  <circle cx="12" cy="12" r="9" stroke="#0E7490" strokeWidth="1.8" />
+                  <path d="M12 7v5l3 3" stroke="#0E7490" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                Correção em análise
+              </Box>
+              <Text fontSize="12px" color="#9CA3AF" mt="2px">
+                Recebemos sua resposta. Nossa equipe vai revisar e você verá o resultado aqui.
+              </Text>
+            </Box>
+          )}
+
+          {/* Indicador — correção aprovada ou rejeitada mais recente, sem
+              outra em aberto no momento (estados terminais sem CTA próprio). */}
+          {!openCorrection && finalStatus.status === "aguardando" && latestCorrectionStatus === "aprovada" && (
+            <Box>
+              <Box
+                display="inline-flex"
+                alignItems="center"
+                gap={2}
+                px={4}
+                py="9px"
+                bg="#DCFCE7"
+                color="#166534"
+                border="1px solid #BBF7D0"
+                borderRadius="10px"
+                fontSize="13px"
+                fontWeight="700"
+              >
+                <svg width="14" height="14" fill="none" viewBox="0 0 24 24">
+                  <path d="M5 13l4 4L19 7" stroke="#166534" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                Correção aprovada
+              </Box>
+              <Text fontSize="12px" color="#9CA3AF" mt="2px">
+                Sua resposta foi aceita. Aguarde a decisão final sobre a sua solicitação.
+              </Text>
+            </Box>
+          )}
+
+          {!openCorrection && finalStatus.status === "aguardando" && latestCorrectionStatus === "rejeitada" && (
+            <Box>
+              <Box
+                display="inline-flex"
+                alignItems="center"
+                gap={2}
+                px={4}
+                py="9px"
+                bg="#FEE2E2"
+                color="#991B1B"
+                border="1px solid #FECACA"
+                borderRadius="10px"
+                fontSize="13px"
+                fontWeight="700"
+              >
+                <svg width="14" height="14" fill="none" viewBox="0 0 24 24">
+                  <path d="M18 6 6 18M6 6l12 12" stroke="#991B1B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                Resposta rejeitada
+              </Box>
+              <Text fontSize="12px" color="#9CA3AF" mt="2px">
+                Sua resposta não foi aceita. Acompanhe a linha do tempo abaixo ou aguarde contato.
+              </Text>
             </Box>
           )}
         </Flex>
