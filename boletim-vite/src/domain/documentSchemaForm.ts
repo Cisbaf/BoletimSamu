@@ -57,11 +57,34 @@ export const DOCUMENT_TYPES = [
   "KINSHIP_PROOF",
 ] as const;
 
+/**
+ * Limites de caracteres, espelhando os max_length dos models do Django
+ * (applicant, incident, document_request). Chave = caminho do campo no formulário.
+ * Se mudar um limite lá, mude aqui: sem isso o erro só aparece no envio final.
+ */
+export const FIELD_MAX = {
+  "other_purpose": 255,
+  "applicant.full_name": 255,
+  "applicant.email": 254,
+  "applicant.address": 500,
+  "incident.patient_name": 150,
+  "incident.neighborhood": 100,
+  "incident.address": 200,
+  "incident.reason": 50,
+  "incident.other_location_description": 100,
+  "incident.occurrence_number": 30,
+  "incident.notes": 150,
+} as const;
+
+export const RECTIFICATION_REASON_MAX = 500;
+
+const maxMsg = (limit: number) => `Máximo de ${limit} caracteres`;
+
 export const ApplicantSchema = z
   .object({
     applicant_type: z.enum(APPLICANT_TYPES, "Selecione uma das opções!"),
     relationship_degree: z.enum(RELATIONSHIP_DEGREES, "Grau de parentesco é obrigatório para representante").optional(),
-    full_name: z.string().min(6, "Nome muito curto!"),
+    full_name: z.string().min(6, "Nome muito curto!").max(FIELD_MAX["applicant.full_name"], maxMsg(FIELD_MAX["applicant.full_name"])),
     cpf: z
       .string()
       .transform(v => v.replace(/\D/g, ""))
@@ -72,8 +95,8 @@ export const ApplicantSchema = z
       .string()
       .transform((v) => v.replace(/[.\-]/g, ""))
       .pipe(z.string().regex(/^\d{7,9}$/, "RG deve conter entre 7 e 9 dígitos")),
-    email: z.string().email("E-mail incorreto!"),
-    address: z.string().nonempty("Preencha o endereço"),
+    email: z.string().email("E-mail incorreto!").max(FIELD_MAX["applicant.email"], maxMsg(FIELD_MAX["applicant.email"])),
+    address: z.string().nonempty("Preencha o endereço").max(FIELD_MAX["applicant.address"], maxMsg(FIELD_MAX["applicant.address"])),
     phone: z
       .string()
       .transform((v) => v.replace(/\D/g, ""))
@@ -127,15 +150,15 @@ export const IncidentDateSchema = z
 export const IncidentSchema = z.object({
   date: IncidentDateSchema,
   time: z.string().nonempty("Preencha um horário"),
-  patient_name: z.string().nonempty("Preencha o nome completo"),
+  patient_name: z.string().nonempty("Preencha o nome completo").max(FIELD_MAX["incident.patient_name"], maxMsg(FIELD_MAX["incident.patient_name"])),
   city: z.enum(CITIES, "Selecione um municipio valido"),
-  neighborhood: z.string().nonempty("Preencha o bairro"),
-  address: z.string().nonempty("Preencha o endereço"),
-  reason: z.string().nonempty("Preencha o motivo").max(50),
+  neighborhood: z.string().nonempty("Preencha o bairro").max(FIELD_MAX["incident.neighborhood"], maxMsg(FIELD_MAX["incident.neighborhood"])),
+  address: z.string().nonempty("Preencha o endereço").max(FIELD_MAX["incident.address"], maxMsg(FIELD_MAX["incident.address"])),
+  reason: z.string().nonempty("Preencha o motivo").max(FIELD_MAX["incident.reason"], maxMsg(FIELD_MAX["incident.reason"])),
   attendance_location: z.enum(ATTENDANCE_LOCATIONS, "Selecione o local do atendimento"),
-  other_location_description: z.string().optional(),
-  occurrence_number: z.string().optional(),
-  notes: z.string().optional(),
+  other_location_description: z.string().max(FIELD_MAX["incident.other_location_description"], maxMsg(FIELD_MAX["incident.other_location_description"])).optional(),
+  occurrence_number: z.string().max(FIELD_MAX["incident.occurrence_number"], maxMsg(FIELD_MAX["incident.occurrence_number"])).optional(),
+  notes: z.string().max(FIELD_MAX["incident.notes"], maxMsg(FIELD_MAX["incident.notes"])).optional(),
 }).superRefine((data, ctx) => {
   if (
     data.attendance_location === "OTH" &&
@@ -197,7 +220,7 @@ export const DocumentsSchema = z
   
 export const DocumentSchema = z.object({
   purpose: z.enum(PURPOSES, "Selecione uma opção!"),
-  other_purpose: z.string().optional(),
+  other_purpose: z.string().max(FIELD_MAX["other_purpose"], maxMsg(FIELD_MAX["other_purpose"])).optional(),
   applicant: ApplicantSchema,
   incident: IncidentSchema,
   documents: DocumentsSchema.optional(),

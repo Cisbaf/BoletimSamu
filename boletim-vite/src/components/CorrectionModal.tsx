@@ -14,6 +14,7 @@ import { useToast } from "../hooks/useToast";
 import { parseDjangoError } from "../helpers/parseErrors";
 import { UPLOAD_HINT, formatSize, prepareUploadFile } from "../domain/fileUpload";
 import { isValidCPF } from "../domain/valid";
+import { FIELD_MAX } from "../domain/documentSchemaForm";
 import { ApiBaseUrl } from "../settings";
 import {
   CORRECTION_FIELD_CATALOG,
@@ -279,6 +280,7 @@ function FieldCard({
   onFileRemove,
 }: FieldCardProps) {
   const isTextarea = TEXTAREA_FIELDS.has(correctionField.fieldKey);
+  const maxLength = (FIELD_MAX as Record<string, number>)[correctionField.fieldKey.replace(/^document\./, "")];
 
   const inputStyle: React.CSSProperties = {
     width: "100%",
@@ -425,6 +427,7 @@ function FieldCard({
             value={textValue}
             onChange={(e) => onTextChange(e.target.value)}
             placeholder={`Novo valor para "${correctionField.fieldLabel}"...`}
+            maxLength={maxLength}
             style={{ ...inputStyle, minHeight: "80px", resize: "vertical" }}
             onFocus={(e) => {
               e.currentTarget.style.borderColor = "#F97316";
@@ -445,6 +448,7 @@ function FieldCard({
           <input
             type="text"
             value={textValue}
+            maxLength={maxLength}
             onChange={(e) => onTextChange(e.target.value)}
             placeholder={`Novo valor para "${correctionField.fieldLabel}"...`}
             style={inputStyle}

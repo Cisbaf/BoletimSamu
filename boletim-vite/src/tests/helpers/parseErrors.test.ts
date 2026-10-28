@@ -18,6 +18,23 @@ describe("parseDjangoError", () => {
     expect(parseDjangoError(error)).toContain("Faltam documentos");
   });
 
+  it("informa qual campo falhou, mesmo aninhado", () => {
+    const error = new ApiError(
+      400,
+      { incident: { occurrence_number: ["Certifique-se de que este campo não tenha mais de 30 caracteres."] } },
+      "",
+      "falhou"
+    );
+    expect(parseDjangoError(error)).toBe(
+      "Nº da ocorrência: Certifique-se de que este campo não tenha mais de 30 caracteres."
+    );
+  });
+
+  it("diferencia o endereço do solicitante do da ocorrência", () => {
+    const error = new ApiError(400, { applicant: { address: ["Obrigatório."] } }, "", "falhou");
+    expect(parseDjangoError(error)).toBe("Endereço do solicitante: Obrigatório.");
+  });
+
   it("não usa HTML de erro do servidor como mensagem", () => {
     const html = "<!doctype html><html><title>Server Error (500)</title></html>";
     const error = new ApiError(500, null, html, "falhou");

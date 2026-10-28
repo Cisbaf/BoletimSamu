@@ -20,18 +20,69 @@ const STATUS_MESSAGES: Record<number, string> = {
   504: "O servidor demorou demais para responder. Verifique sua conexão e tente novamente.",
 };
 
-function collectMessages(value: unknown, messages: string[]) {
+/**
+ * Nomes amigáveis dos campos, para que o erro diga ONDE está o problema
+ * ("Nº da ocorrência: ...") em vez de só repetir a frase do DRF.
+ * A chave é o último trecho do caminho do erro (ex.: incident.occurrence_number).
+ */
+const FIELD_LABELS: Record<string, string> = {
+  purpose: "Finalidade",
+  applicant_type: "Tipo de solicitante",
+  relationship_degree: "Grau de parentesco",
+  files: "Anexos",
+  types: "Tipos de anexo",
+  full_name: "Nome completo",
+  cpf: "CPF",
+  rg: "RG",
+  email: "E-mail",
+  phone: "Telefone",
+  date: "Data da ocorrência",
+  time: "Hora da ocorrência",
+  patient_name: "Nome do paciente",
+  city: "Município",
+  neighborhood: "Bairro",
+  reason: "Motivo da solicitação da ambulância",
+  attendance_location: "Local do atendimento",
+  other_location_description: "Descrição do outro local",
+  occurrence_number: "Nº da ocorrência",
+  notes: "Observações",
+  other_purpose: "Outro motivo",
+  PATIENT_ID: "Documento com foto do paciente",
+  APPLICANT_ID: "Documento com foto do solicitante",
+  MARRIAGE_CERTIFICATE: "Certidão de casamento / União estável",
+  POWER_OF_ATTORNEY: "Procuração específica",
+  DEATH_CERTIFICATE: "Certidão de Óbito",
+  KINSHIP_PROOF: "Comprovante de Parentesco",
+};
+
+// "address" existe no solicitante e na ocorrência, então o rótulo depende do pai.
+const PATH_LABELS: Record<string, string> = {
+  "applicant.address": "Endereço do solicitante",
+  "incident.address": "Endereço da ocorrência",
+};
+
+const GENERIC_KEYS = new Set(["detail", "non_field_errors"]);
+
+function labelFor(path: string[]): string | null {
+  const last = path[path.length - 1];
+  if (!last || GENERIC_KEYS.has(last) || /^\d+$/.test(last)) return null;
+  const parent = path[path.length - 2];
+  return PATH_LABELS[`${parent}.${last}`] ?? FIELD_LABELS[last] ?? null;
+}
+
+function collectMessages(value: unknown, messages: string[], path: string[] = []) {
   if (!value) return;
 
   if (typeof value === "string") {
     // Corpos de erro em HTML (nginx/Django) não servem como mensagem.
     if (value.length > 300 || /<\s*(html|head|body|!doctype)/i.test(value)) return;
-    messages.push(value);
+    const label = labelFor(path);
+    messages.push(label ? `${label}: ${value}` : value);
   } else if (Array.isArray(value)) {
-    value.forEach((item) => collectMessages(item, messages));
+    value.forEach((item) => collectMessages(item, messages, path));
   } else if (typeof value === "object") {
-    Object.values(value as Record<string, unknown>).forEach((item) =>
-      collectMessages(item, messages)
+    Object.entries(value as Record<string, unknown>).forEach(([key, item]) =>
+      collectMessages(item, messages, [...path, key])
     );
   }
 }

@@ -18,6 +18,7 @@ import {
   PURPOSE_LABELS,
   PURPOSES,
 } from "../../domain/documentSchemaForm";
+import { FIELD_MAX } from "../../domain/documentSchemaForm";
 import { todayISODate } from "../../utils/dates";
 import { Controller } from "react-hook-form";
 
@@ -91,7 +92,7 @@ export default function IncidentForm() {
 
         <Field.Root invalid={!!errors.incident?.patient_name}>
           <Field.Label {...LABEL_STYLE}>Nome completo do paciente *</Field.Label>
-          <Input placeholder="Nome completo" {...register("incident.patient_name")} />
+          <Input maxLength={FIELD_MAX["incident.patient_name"]} placeholder="Nome completo" {...register("incident.patient_name")} />
           <Field.ErrorText>{errors.incident?.patient_name?.message}</Field.ErrorText>
         </Field.Root>
 
@@ -135,13 +136,13 @@ export default function IncidentForm() {
 
         <Field.Root invalid={!!errors.incident?.neighborhood}>
           <Field.Label {...LABEL_STYLE}>Bairro *</Field.Label>
-          <Input placeholder="Bairro" {...register("incident.neighborhood")} />
+          <Input maxLength={FIELD_MAX["incident.neighborhood"]} placeholder="Bairro" {...register("incident.neighborhood")} />
           <Field.ErrorText>{errors.incident?.neighborhood?.message}</Field.ErrorText>
         </Field.Root>
 
         <Field.Root invalid={!!errors.incident?.address}>
           <Field.Label {...LABEL_STYLE}>Endereço *</Field.Label>
-          <Input placeholder="Rua, número, referência" {...register("incident.address")} />
+          <Input maxLength={FIELD_MAX["incident.address"]} placeholder="Rua, número, referência" {...register("incident.address")} />
           <Field.ErrorText>{errors.incident?.address?.message}</Field.ErrorText>
         </Field.Root>
 
@@ -153,7 +154,7 @@ export default function IncidentForm() {
           Motivo da solicitação *
           <Text as="span" fontWeight="400" color="#9CA3AF" ml={1}>(máx. 50 caracteres)</Text>
         </Field.Label>
-        <Input maxLength={50} placeholder="Ex: Trauma / Acidente de trânsito" {...register("incident.reason")} />
+        <Input maxLength={FIELD_MAX["incident.reason"]} placeholder="Ex: Trauma / Acidente de trânsito" {...register("incident.reason")} />
         <Field.ErrorText>{errors.incident?.reason?.message}</Field.ErrorText>
       </Field.Root>
 
@@ -184,6 +185,7 @@ export default function IncidentForm() {
             <Box mt={3}>
               <Field.Root invalid={!!errors.incident?.other_location_description}>
                 <Input
+                  maxLength={FIELD_MAX["incident.other_location_description"]}
                   placeholder="Descreva o local..."
                   {...register("incident.other_location_description")}
                 />
@@ -219,6 +221,7 @@ export default function IncidentForm() {
             <Box mt={3}>
               <Field.Root invalid={!!errors.other_purpose}>
                 <Input
+                  maxLength={FIELD_MAX["other_purpose"]}
                   placeholder="Descreva a finalidade..."
                   {...register("other_purpose")}
                 />
@@ -239,7 +242,7 @@ export default function IncidentForm() {
             Nº da ocorrência
             <Text as="span" fontWeight="400" color="#9CA3AF" ml={1}>(opcional)</Text>
           </Field.Label>
-          <Input placeholder="Ex: 0000000/0" {...register("incident.occurrence_number")} />
+          <Input maxLength={FIELD_MAX["incident.occurrence_number"]} placeholder="Ex: 0000000/0" {...register("incident.occurrence_number")} />
           <Field.ErrorText>{errors.incident?.occurrence_number?.message}</Field.ErrorText>
         </Field.Root>
 
@@ -249,7 +252,7 @@ export default function IncidentForm() {
             <Text as="span" fontWeight="400" color="#9CA3AF" ml={1}>(opcional · máx. 150 caracteres)</Text>
           </Field.Label>
           <Textarea
-            maxLength={150}
+            maxLength={FIELD_MAX["incident.notes"]}
             placeholder="Informações adicionais relevantes..."
             resize="none"
             h="42px"
