@@ -1,6 +1,9 @@
 export const APPROVED_MESSAGE = `Prezado(a),
 
-Sua solicitação foi aprovada. O documento já está disponível para retirada mediante apresentação de documento de identificação.
+Sua solicitação foi aprovada. O documento já está disponível para retirada presencial na unidade do CISBAF, mediante apresentação de documento de identificação.
+
+Endereço: Av. Governador Roberto Silveira, nº 2.012 – Posse, Nova Iguaçu - RJ, CEP: 26020-740.
+Horário de atendimento: segunda a sexta-feira, das 09h às 17h.
 
 Atenciosamente.`;
 
