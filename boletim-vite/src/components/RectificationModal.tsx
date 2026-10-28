@@ -5,6 +5,7 @@ import { usePost } from "../hooks/usePost";
 import { useToast } from "../hooks/useToast";
 import { parseDjangoError } from "../helpers/parseErrors";
 import { isValidCPF } from "../domain/valid";
+import { RECTIFICATION_REASON_MAX } from "../domain/documentSchemaForm";
 import { ApiBaseUrl } from "../settings";
 
 const MotionBox = motion(Box);
@@ -170,6 +171,7 @@ function RequestState({ cpf, setCpf, reason, setReason, fieldError, loading, onC
         <textarea
           placeholder="Descreva brevemente o erro identificado..."
           value={reason}
+          maxLength={RECTIFICATION_REASON_MAX}
           onChange={(e) => setReason(e.target.value)}
           style={{
             width: "100%",

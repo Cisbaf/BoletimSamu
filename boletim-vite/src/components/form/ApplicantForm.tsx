@@ -8,6 +8,7 @@ import {
   Grid,
   Text,
 } from "@chakra-ui/react";
+import { FIELD_MAX } from "../../domain/documentSchemaForm";
 import { useDocumentFormContext } from "../../context/DocumentFormContext";
 import { useWatch } from "react-hook-form";
 import { generateFakeFilling } from "../../utils/fakeFilling";
@@ -148,7 +149,7 @@ export default function ApplicantForm() {
       >
         <Field.Root invalid={!!errors.applicant?.full_name}>
           <Field.Label fontWeight="600" fontSize="13px" color="#374151">Nome completo *</Field.Label>
-          <Input autoComplete="name" placeholder="Ex: João da Silva Santos" {...register("applicant.full_name")} />
+          <Input maxLength={FIELD_MAX["applicant.full_name"]} autoComplete="name" placeholder="Ex: João da Silva Santos" {...register("applicant.full_name")} />
           <Field.ErrorText>{errors.applicant?.full_name?.message}</Field.ErrorText>
         </Field.Root>
 
@@ -172,13 +173,13 @@ export default function ApplicantForm() {
       >
         <Field.Root invalid={!!errors.applicant?.email}>
           <Field.Label fontWeight="600" fontSize="13px" color="#374151">Email *</Field.Label>
-          <Input autoComplete="email" placeholder="seu@email.com" {...register("applicant.email")} />
+          <Input maxLength={FIELD_MAX["applicant.email"]} autoComplete="email" placeholder="seu@email.com" {...register("applicant.email")} />
           <Field.ErrorText>{errors.applicant?.email?.message}</Field.ErrorText>
         </Field.Root>
 
         <Field.Root invalid={!!errors.applicant?.address}>
           <Field.Label fontWeight="600" fontSize="13px" color="#374151">Endereço *</Field.Label>
-          <Input placeholder="Rua, número, bairro, cidade — UF" {...register("applicant.address")} />
+          <Input maxLength={FIELD_MAX["applicant.address"]} placeholder="Rua, número, bairro, cidade — UF" {...register("applicant.address")} />
           <Field.ErrorText>{errors.applicant?.address?.message}</Field.ErrorText>
         </Field.Root>
 

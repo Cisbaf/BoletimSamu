@@ -245,3 +245,12 @@ describe("IncidentDateSchema", () => {
     expect(result.error?.issues[0]?.message).toBe("A data não pode ser futura");
   });
 });
+
+describe("limites de caracteres (espelham o max_length do backend)", () => {
+  it("rejeita nº da ocorrência com mais de 30 caracteres", async () => {
+    const { IncidentSchema } = await import("../../domain/documentSchemaForm");
+    const r = IncidentSchema.shape.occurrence_number.safeParse("x".repeat(31));
+    expect(r.success).toBe(false);
+    expect(IncidentSchema.shape.occurrence_number.safeParse("x".repeat(30)).success).toBe(true);
+  });
+});
