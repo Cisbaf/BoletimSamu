@@ -1,4 +1,4 @@
-import { Box, Checkbox, Flex, Text } from "@chakra-ui/react";
+import { Box, Checkbox, Text } from "@chakra-ui/react";
 import { acceptTermText } from "../../utils/term";
 
 interface TermsStepProps {
@@ -39,19 +39,20 @@ export default function TermsStep({ accepted, onChangeAccepted }: TermsStepProps
         bg={accepted ? "#EFF6FF" : "white"}
         transition="all 0.15s"
       >
-        <Flex align="center" gap={3} cursor="pointer" onClick={() => onChangeAccepted(!accepted)}>
-          <Checkbox.Root
-            checked={accepted}
-            onCheckedChange={(e) => onChangeAccepted(!!e.checked)}
-            colorPalette="blue"
-          >
-            <Checkbox.HiddenInput />
-            <Checkbox.Control />
-          </Checkbox.Root>
-          <Text fontSize="13px" fontWeight="600" color="#111827">
+        <Checkbox.Root
+          checked={accepted}
+          onCheckedChange={(e) => onChangeAccepted(!!e.checked)}
+          colorPalette="blue"
+          cursor="pointer"
+          w="100%"
+          gap={3}
+        >
+          <Checkbox.HiddenInput />
+          <Checkbox.Control />
+          <Checkbox.Label fontSize="13px" fontWeight="600" color="#111827">
             Li e estou de acordo com os termos acima.
-          </Text>
-        </Flex>
+          </Checkbox.Label>
+        </Checkbox.Root>
       </Box>
     </Box>
   );
