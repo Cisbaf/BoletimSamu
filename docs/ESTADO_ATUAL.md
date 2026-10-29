@@ -131,7 +131,8 @@ Roteamento: todas as rotas de API vêm antes do *catch-all* `^.*$` que serve o `
 
 ## 7. Integrações
 
-- **Notificação WhatsApp**: ao criar pedido, `services.py` envia POST para um serviço interno (`http://192.168.1.10:8001/notification`) avisando o administrador (número fixo no código) com o link de acompanhamento. Timeout de 3s e falhas são silenciadas.
+- **Notificação WhatsApp ao solicitante** (app `notifications`): cada novo evento de status (pedido, retificação e correção — inclusive o status inicial, que confirma o protocolo) dispara uma mensagem ao celular do solicitante via serviço de notificações da VPS (`NOTIFY_URL` + `NOTIFY_API_KEY`; vazio = desligado). O envio é feito por `post_save` + `transaction.on_commit`, em thread própria (não bloqueia a requisição), com `idempotency_key` por evento (`doc-status-<id>`, `ret-status-<id>`, `cor-status-<id>`) e retry em 429/5xx/timeout. Telefones fixos são ignorados. Falhas só vão para o log (`boletim.notifications`), sem texto nem número.
+- **Notificação WhatsApp ao administrador (legado, desativado)**: ao criar pedido, `services.py` envia POST para um serviço interno (`http://192.168.1.10:8001/notification`) avisando o administrador (número fixo no código) com o link de acompanhamento. Timeout de 3s e falhas são silenciadas.
 
 ---
 

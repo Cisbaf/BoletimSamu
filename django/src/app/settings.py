@@ -96,7 +96,8 @@ INSTALLED_APPS = [
     'document_request',
     'applicant',
     'applicant_document',
-    'incident'
+    'incident',
+    'notifications',
 ]
 
 MIDDLEWARE = [
@@ -224,3 +225,10 @@ LOGGING = {
     },
 }
 
+
+
+# Notificações por WhatsApp (serviço de notificações da VPS).
+# NOTIFY_URL vazio = envio desligado, sem erro.
+NOTIFY_URL = os.getenv("NOTIFY_URL", "")
+NOTIFY_API_KEY = os.getenv("NOTIFY_API_KEY", "")
+NOTIFY_SITE_URL = os.getenv("NOTIFY_SITE_URL", "https://atendimentocrur.cisbaf.org.br")
